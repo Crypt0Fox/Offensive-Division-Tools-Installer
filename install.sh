@@ -13,7 +13,7 @@ export DEBIAN_FRONTEND=noninteractive
 echo -e "${GREEN}[+] Updating and installing essentials...${NC}"
 sudo apt update && sudo apt full-upgrade -y
 sudo apt install -y \
-  dhclient curl wget git unzip python3 python3-pip python3-venv build-essential \
+  isc-dhcp-client curl wget git unzip python3 python3-pip python3-venv build-essential \
   jq net-tools docker.io docker-compose pipx cmatrix lolcat figlet zsh fzf bat ripgrep \
   fortune gedit libreadline-dev libusb-0.1-4 pkg-config libpcsclite-dev pcscd
 
