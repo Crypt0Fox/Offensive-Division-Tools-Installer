@@ -33,7 +33,7 @@ sudo  git clone [https://github.com/Crypt0Fox/Offensive-Division-Tools-Installer
 ## 🧼 After Install
 
 ✔️ Reboot completes Docker group setup  
-✔️ Type `cmatrix` if you want to feel like a cyber god 😎  
+✔️ Type `cmatrix` if you want to feel like a cyber god 😎 (... or whenever you need to hide your battlescreen 😜)
 ✔️ Enjoy the banner every terminal launch
 
 ## 📜 License
