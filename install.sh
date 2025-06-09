@@ -53,9 +53,24 @@ cd AutoRecon && python3 -m venv venv && source venv/bin/activate && pip install 
 cd /opt/active-directory && git clone https://github.com/BloodHoundAD/BloodHound.git BloodHoundCE
 cd BloodHoundCE/docker && docker compose -f docker-compose.linux.yml up -d
 
-# === 6. Proxmark3 (RFID) ===
-cd /opt/recon && git clone https://github.com/RfidResearchGroup/proxmark3.git
-cd proxmark3 && make clean && make -j$(nproc)
+# Add Proxmark3 build requirements
+sudo apt install -y \
+  gcc-arm-none-eabi \
+  libnewlib-dev \
+  libbz2-dev \
+  libssl-dev \
+  libclang-dev \
+  libbluetooth-dev \
+  libpython3-dev
+
+# === 6. Proxmark3 (RFID Recon) ===
+cd /opt/recon
+git clone https://github.com/RfidResearchGroup/proxmark3.git
+cd proxmark3
+make clean && make -j$(nproc)
+sudo make install
+
+# create global link
 mkdir -p "$HOME/bin"
 ln -sf /opt/recon/proxmark3/client/proxmark3 "$HOME/bin/proxmark3"
 
