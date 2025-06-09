@@ -1,4 +1,3 @@
-```md
 # 🦊 Offensive-Division-Tool-Installer
 
 A plug & play battle-ready arsenal for **Kali Linux** — built for Red Teamers, Ethical Hackers, and Cyber Operators.
@@ -15,14 +14,10 @@ A plug & play battle-ready arsenal for **Kali Linux** — built for Red Teamers,
 
 ## 🧰 Install
 
-```
-
 git clone [https://github.com/Crypt0Fox/Offensive-Division-Tool-Installer.git](https://github.com/Crypt0Fox/Offensive-Division-Tool-Installer.git)
 cd Offensive-Division-Tool-Installer
 chmod +x install.sh
 sudo ./install.sh
-
-```
 
 ## 📎 Tools Deployed
 
@@ -51,4 +46,4 @@ sudo ./install.sh
 ---
 
 **Built by CryptoFox. Stay sharp. Stay offensive. 🦊💣**
-```
+
