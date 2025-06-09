@@ -13,7 +13,7 @@ export DEBIAN_FRONTEND=noninteractive
 echo -e "${GREEN}[+] Updating and installing essentials...${NC}"
 sudo apt update && sudo apt full-upgrade -y
 sudo apt install -y \
-  dhclient curl wget git unzip python3 python3-pip python3-venv build-essential \
+  isc-dhcp-client curl wget git unzip python3 python3-pip python3-venv build-essential \
   jq net-tools docker.io docker-compose pipx cmatrix lolcat figlet zsh fzf bat ripgrep \
   fortune gedit libreadline-dev libusb-0.1-4 pkg-config libpcsclite-dev pcscd
 
@@ -31,9 +31,10 @@ sudo usermod -aG docker "$USER"
 echo -e "${GREEN}[+] Installing CLI tools via pipx...${NC}"
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs/ | sh -s -- -y
 source $HOME/.cargo/env
-python3 -m pip install --user pipx
-~/.local/bin/pipx ensurepath
+python3 -m pip install --user pipx --break-system-packages
 export PATH="$HOME/.local/bin:$PATH"
+pipx ensurepath
+hash -r
 pipx install impacket
 pipx install bloodhound-ce
 pipx install git+https://github.com/Pennyw0rth/NetExec
@@ -42,6 +43,23 @@ pipx install git+https://github.com/garrettfoster13/sccmhunter
 
 # === 4. Create /opt Layout ===
 echo -e "${GREEN}[+] Creating tool directories...${NC}"
+
+# === SSH Key Setup ===
+if [ ! -f "$HOME/.ssh/id_ed25519" ]; then
+  echo -e "${GREEN}[+] Generating SSH key...${NC}"
+  ssh-keygen -t ed25519 -C "cryptofox@offensive" -f "$HOME/.ssh/id_ed25519" -N ''
+  eval "$(ssh-agent -s)"
+  ssh-add "$HOME/.ssh/id_ed25519"
+  echo -e "${ORANGE}[!] Add the following SSH key to your GitHub account:${NC}"
+  echo "======================================"
+  cat "$HOME/.ssh/id_ed25519.pub"
+  echo "======================================"
+  echo -e "${ORANGE}Visit: https://github.com/settings/keys${NC}"
+  read -p "[+] Press Enter after adding the key to continue..."
+else
+  echo -e "${GREEN}[+] SSH key already exists, skipping.${NC}"
+fi
+
 sudo mkdir -p /opt/{active-directory,binaries,credential-access,lateral-movement,post-exploitation,recon,webshells}
 sudo chown -R "$USER:$USER" /opt/*
 
@@ -52,9 +70,24 @@ cd AutoRecon && python3 -m venv venv && source venv/bin/activate && pip install 
 cd /opt/active-directory && git clone https://github.com/BloodHoundAD/BloodHound.git BloodHoundCE
 cd BloodHoundCE/docker && docker compose -f docker-compose.linux.yml up -d
 
-# === 6. Proxmark3 (RFID) ===
-cd /opt/recon && git clone https://github.com/RfidResearchGroup/proxmark3.git
-cd proxmark3 && make clean && make -j$(nproc)
+# Add Proxmark3 build requirements
+sudo apt install -y \
+  gcc-arm-none-eabi \
+  libnewlib-dev \
+  libbz2-dev \
+  libssl-dev \
+  libclang-dev \
+  libbluetooth-dev \
+  libpython3-dev
+  
+# === 6. Proxmark3 (RFID Recon) ===
+cd /opt/recon
+git clone https://github.com/RfidResearchGroup/proxmark3.git
+cd proxmark3
+make clean && make -j$(nproc)
+sudo make install
+
+# create global link
 mkdir -p "$HOME/bin"
 ln -sf /opt/recon/proxmark3/client/proxmark3 "$HOME/bin/proxmark3"
 
