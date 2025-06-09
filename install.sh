@@ -31,7 +31,7 @@ sudo usermod -aG docker "$USER"
 echo -e "${GREEN}[+] Installing CLI tools via pipx...${NC}"
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs/ | sh -s -- -y
 source $HOME/.cargo/env
-python3 -m pip install --user pipx
+python3 -m pip install --break-system-packages --user pipx
 ~/.local/bin/pipx ensurepath
 export PATH="$HOME/.local/bin:$PATH"
 pipx install impacket
