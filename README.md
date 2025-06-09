@@ -1,4 +1,4 @@
-````md
+```md
 # 🦊 Offensive-Division-Tool-Installer
 
 A plug & play battle-ready arsenal for **Kali Linux** — built for Red Teamers, Ethical Hackers, and Cyber Operators.
@@ -15,39 +15,33 @@ A plug & play battle-ready arsenal for **Kali Linux** — built for Red Teamers,
 
 ## 🧰 Install
 
-```bash
-git clone https://github.com/Crypt0Fox/Offensive-Division-Tool-Installer.git
+```
+
+git clone [https://github.com/Crypt0Fox/Offensive-Division-Tool-Installer.git](https://github.com/Crypt0Fox/Offensive-Division-Tool-Installer.git)
 cd Offensive-Division-Tool-Installer
 chmod +x install.sh
 sudo ./install.sh
-````
 
-📌 The script will:
-
-* Update + install dependencies
-* Clone + configure tools
-* Link CLI tools (like `proxmark3`) to `$HOME/bin`
-* Setup automatic healthchecks
-* Reboot for group permissions
+```
 
 ## 📎 Tools Deployed
 
-* BloodHound CE (Docker + ingestors)
-* AutoRecon, Certipy, BobTheSmuggler
-* Impacket, NetExec, DonPAPI, SCCMHunter
-* Responder, Chisel, Proxmark3
-* Plus dozens more from your 🔥 Foxy Arsenal
+- BloodHound CE (Docker + ingestors)
+- AutoRecon, Certipy, BobTheSmuggler
+- Impacket, NetExec, DonPAPI, SCCMHunter
+- Responder, Chisel, Proxmark3
+- Plus dozens more from your 🔥 Foxy Arsenal
 
 ## 📍 Logs & Health
 
-* Healthcheck logs: `/var/log/unit6_healthcheck.log`
-* Tool location: `/opt/[category]/[toolname]`
-* Extra binaries: `$HOME/bin/`
+- Healthcheck logs: `/var/log/unit6_healthcheck.log`
+- Tool location: `/opt/[category]/[toolname]`
+- Extra binaries: `$HOME/bin/`
 
 ## 🧼 After Install
 
-✔️ Reboot completes Docker group setup
-✔️ Type `cmatrix` if you want to feel like a cyber god 😎
+✔️ Reboot completes Docker group setup  
+✔️ Type `cmatrix` if you want to feel like a cyber god 😎  
 ✔️ Enjoy the banner every terminal launch
 
 ## 📜 License
@@ -57,4 +51,4 @@ sudo ./install.sh
 ---
 
 **Built by CryptoFox. Stay sharp. Stay offensive. 🦊💣**
-
+```
