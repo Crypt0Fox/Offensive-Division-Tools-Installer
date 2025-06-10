@@ -19,66 +19,29 @@ else
   echo "[!] Skipping full-upgrade. Proceeding with regular upgrade."
   sudo apt upgrade -y
 fi
-# Install essentials (no inline comments in the package list)
 sudo apt install -y \
-  isc-dhcp-client curl wget \
-  git unzip python3 python3-pip python3-venv build-essential \
-  jq net-tools docker.io docker-compose cmatrix lolcat figlet zsh fzf bat ripgrep
+  isc-dhcp-client curl wget git unzip python3 python3-pip python3-venv build-essential \
+  jq net-tools docker.io docker-compose pipx cmatrix lolcat figlet zsh fzf bat ripgrep \
+  fortune gedit libreadline-dev libusb-0.1-4 pkg-config libpcsclite-dev pcscd
 
-# Install Starship prompt
-curl -sS https://starship.rs/install.sh -o install_starship.sh
-echo "b3d1f1e5d5c3e4a6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0  install_starship.sh" | sha256sum -c --status
-if [ $? -eq 0 ]; then
-  sh install_starship.sh -y
-  rm install_starship.sh
-  # Ensure PATH persists across sessions
-  if ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' "$HOME/.bashrc"; then
-      echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
-  fi
-  if [ -f "$HOME/.zshrc" ] && ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' "$HOME/.zshrc"; then
-      echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.zshrc"
-  fi
-else
-  echo "Checksum verification failed for Starship installer. Aborting."
-  exit 1
-fi
+# === 1. Shell & Aesthetics ===
+echo 'eval "$(starship init zsh)"' >> ~/.zshrc
+echo 'figlet "STAY SHARP" | lolcat' >> ~/.zshrc
+echo 'fortune | lolcat' >> ~/.zshrc
 
-# Ensure starship and pipx are installed before using them
-if ! command -v starship &> /dev/null; then
-  curl -sS https://starship.rs/install.sh | sh -s -- -y
-fi
-if ! command -v pipx &> /dev/null; then
-  python3 -m pip install --user pipx
-  export PATH="$HOME/.local/bin:$PATH"
-fi
-RUST_INSTALL_SCRIPT_URL="https://sh.rustup.rs"
-RUST_INSTALL_SCRIPT_CHECKSUM="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" # Replace with actual checksum
-curl -sSf "$RUST_INSTALL_SCRIPT_URL" -o rustup-init.sh
-echo "$RUST_INSTALL_SCRIPT_CHECKSUM rustup-init.sh" | sha256sum --check --status
-if [ $? -eq 0 ]; then
-  sh rustup-init.sh -y
-  rm rustup-init.sh
-else
-  echo "Checksum verification failed for Rust installation script."
-  exit 1
-fi
-sudo usermod -aG docker "$USER"
-echo -e "${ORANGE}[!] You need to log out or reboot for Docker group changes to take effect.${NC}"
 # === 2. Docker Setup ===
 echo -e "${GREEN}[+] Configuring Docker...${NC}"
 sudo systemctl enable docker --now
 sudo usermod -aG docker "$USER"
-
+# Installing pipx without the --break-system-packages flag to avoid conflicts with system-managed Python packages
+python3 -m pip install --user pipx
 # === 3. pipx & Rust Setup ===
 echo -e "${GREEN}[+] Installing CLI tools via pipx...${NC}"
-if [ -f "$HOME/.cargo/env" ]; then
-  source $HOME/.cargo/env
-else
-  echo "Rust environment file not found. Ensure Rust installation completed successfully."
-  exit 1
-fi
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs/ | sh -s -- -y
+source $HOME/.cargo/env
+python3 -m pip install --user pipx --break-system-packages
+python3 -m pip install --user pipx --break-system-packages
 export PATH="$HOME/.local/bin:$PATH"
-pipx ensurepath
 pipx ensurepath
 hash -r
 pipx install impacket
@@ -86,24 +49,24 @@ pipx install bloodhound-ce
 pipx install git+https://github.com/Pennyw0rth/NetExec
 pipx install git+https://github.com/login-securite/DonPAPI.git
 pipx install git+https://github.com/garrettfoster13/sccmhunter
-if [ -f "$HOME/.ssh/id_ed25519" ]; then
-  echo -e "${ORANGE}[!] SSH key already exists.${NC}"
-  read -p "[!] Overwrite existing SSH key? (y/N): " overwrite
-  if [[ ! "$overwrite" =~ ^[Yy]$ ]]; then
-    echo -e "${GREEN}[+] Skipping SSH key generation.${NC}"
-    exit 0
-  fi
-fi
 
-echo -e "${GREEN}[+] Generating SSH key...${NC}"
-ssh-keygen -t ed25519 -C "cryptofox@offensive" -f "$HOME/.ssh/id_ed25519" -N ''
-eval "$(ssh-agent -s)"
-echo -e "${ORANGE}[!] Add the following SSH key to your GitHub account:${NC}"
-echo "======================================"
-cat "$HOME/.ssh/id_ed25519.pub"
-echo "======================================"
-echo -e "${ORANGE}Visit: https://github.com/settings/keys${NC}"
-read -p "[+] Press Enter after adding the key to continue..."
+# === 4. Create /opt Layout ===
+echo -e "${GREEN}[+] Creating tool directories...${NC}"
+
+# === SSH Key Setup ===
+if [ ! -f "$HOME/.ssh/id_ed25519" ]; then
+  echo -e "${GREEN}[+] Generating SSH key...${NC}"
+  ssh-keygen -t ed25519 -C "cryptofox@offensive" -f "$HOME/.ssh/id_ed25519" -N ''
+  eval "$(ssh-agent -s)"
+  ssh-add "$HOME/.ssh/id_ed25519"
+  echo -e "${ORANGE}[!] Add the following SSH key to your GitHub account:${NC}"
+  echo "======================================"
+  cat "$HOME/.ssh/id_ed25519.pub"
+  echo "======================================"
+  echo -e "${ORANGE}Visit: https://github.com/settings/keys${NC}"
+  read -p "[+] Press Enter after adding the key to continue..."
+else
+  echo -e "${GREEN}[+] SSH key already exists, skipping.${NC}"
 fi
 
 sudo mkdir -p /opt/{active-directory,binaries,credential-access,lateral-movement,post-exploitation,recon,webshells}
@@ -118,8 +81,22 @@ cd BloodHoundCE/docker && docker compose -f docker-compose.linux.yml up -d
 # Add Proxmark3 build requirements
 sudo apt install -y \
   gcc-arm-none-eabi \
+make clean && make -j2
   libbz2-dev \
   libssl-dev \
+  libclang-dev \
+  libbluetooth-dev \
+  libpython3-dev
+  
+# === 6. Proxmark3 (RFID Recon) ===
+cd /opt/recon
+git clone https://github.com/RfidResearchGroup/proxmark3.git
+cd proxmark3
+make clean && make -j$(nproc)
+sudo make install
+# create global link
+mkdir -p "$HOME/bin"
+# Add Proxmark3 build requirements
 sudo apt install -y \
   gcc-arm-none-eabi \
   libbz2-dev \
@@ -127,10 +104,17 @@ sudo apt install -y \
   libclang-dev \
   libbluetooth-dev \
   libpython3-dev
+
+# === 6. Proxmark3 (RFID Recon) ===
+cd /opt/recon
+git clone https://github.com/RfidResearchGroup/proxmark3.git
+cd proxmark3
 make clean && make -j$(nproc)
 sudo make install
 wget -nc -q https://github.com/jpillora/chisel/releases/download/v1.7.3/chisel_1.7.3_linux_amd64 -O chisel
 chmod +x chisel
+
+# === 8. Python Venv Tools ===
 install_python_tool() {
   REPO=$1; FOLDER=$2; DEST=$3
   cd "/opt/$DEST" && git clone "$REPO" "$FOLDER"
@@ -185,28 +169,35 @@ sudo apt upgrade -y
 sudo apt -s autoremove
 sudo apt autoremove -y
 sudo apt autoclean -y
-rc_packages=$(dpkg -l | awk '/^rc/ {print $2}')
-if [[ -n "$rc_packages" ]]; then
-  echo "Purging packages in 'rc' state: $rc_packages"
-  sudo apt purge -y $rc_packages || {
-    echo "Error occurred while purging packages. Please check manually."
-rc_packages=$(dpkg -l | awk '/^rc/ {print $2}')
-if [[ -n "$rc_packages" ]]; then
-  echo "Purging packages in 'rc' state: $rc_packages"
-  sudo apt purge -y $rc_packages || {
-    echo "Error occurred while purging packages. Please check manually."
-    exit 1
-  }
+if dpkg -l | awk '/^rc/ {print $2}' | grep -q .; then
+  sudo apt purge -y $(dpkg -l | awk '/^rc/ {print $2}') || true
+else
+  echo "No packages in 'rc' state to purge."
 fi
+
+# === 11. Final Checks ===
+echo -e "${ORANGE}[!] Rebooting in 60 seconds to finalize setup.${NC}"
+echo -e "${ORANGE}Press 'c' to cancel, 'd' to delay, or any other key to proceed with the reboot.${NC}"
+read -n 1 -t 60 user_input
+if [[ "$user_input" == "c" ]]; then
   echo -e "${GREEN}[+] Reboot canceled.${NC}"
   exit 0
 elif [[ "$user_input" == "d" ]]; then
+# The 'sudo reboot' command restarts the system to apply all changes made during the setup process.
+sudo reboot
+  exit 0
+else
+  echo -e "${ORANGE}[!] Proceeding with reboot.${NC}"
+  sudo reboot
+fi
+echo -e "${ORANGE}[!] Rebooting in 60 seconds to finalize setup.${NC}"
+echo -e "${ORANGE}Cancel with CTRL+C or run 'init 6' if needed sooner.${NC}"
+sleep 60
+sudo reboot
+elif [[ "$user_input" == "d" ]]; then
   echo -e "${ORANGE}[!] Delaying reboot. Please reboot manually when ready.${NC}"
   exit 0
-elif [[ -z "$user_input" ]]; then
-  echo -e "${ORANGE}[!] Timeout reached. Proceeding with reboot.${NC}"
-  sudo reboot
 else
-  echo -e "${ORANGE}[!] Invalid input. Proceeding with reboot.${NC}"
+  echo -e "${ORANGE}[!] Proceeding with reboot.${NC}"
   sudo reboot
 fi
