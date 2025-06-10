@@ -108,10 +108,10 @@ if [ -d /opt/recon/AutoRecon ]; then
 else
   echo "[!] AutoRecon clone failed or missing."
 fi
-[ -d /opt/active-directory/BloodHoundCE/.git ] || git clone https://github.com/BloodHoundAD/BloodHound.git /opt/active-directory/BloodHoundCE
+[ -d /opt/active-directory/BloodHoundCE/.git ] || git clone https://github.com/SpecterOps/BloodHoundCE.git /opt/active-directory/BloodHoundCE
 if [ -d /opt/active-directory/BloodHoundCE/docker ]; then
-  cd /opt/active-directory/BloodHoundCE/docker
-  docker compose -f docker-compose.linux.yml up -d
+  cd /opt/active-directory/BloodHoundCE/deploy
+  docker compose up -d  
 else
   echo "[!] BloodHoundCE/docker not found. Clone may have failed."
 fi
@@ -131,7 +131,7 @@ cd /opt/recon
 
 # === 7. create global link ===
 mkdir -p "$HOME/bin"
-ln -s /opt/recon/proxmark3/client/proxmark3 "$HOME/bin/proxmark3"
+[ -L "$HOME/bin/proxmark3" ] || ln -s /opt/recon/proxmark3/client/proxmark3 "$HOME/bin/proxmark3"
 echo 'export PATH="$HOME/bin:$PATH"' >> "$HOME/.zshrc"
 
 # === 8. Python Venv Tools ===
@@ -159,7 +159,12 @@ install_python_tool() {
   deactivate
 }
 install_python_tool https://github.com/ly4k/Certipy.git Certipy-5.0.2 active-directory
-install_python_tool https://github.com/0xJs/BobTheSmuggler.git BobTheSmuggler recon
+ssh -T git@github.com 2>&1 | grep -q 'successfully authenticated' || {
+  echo "${RED}[!] SSH key not registered on GitHub. Please add it first."
+  echo "${YELLOW}Visit: https://github.com/settings/keys${NC}"
+  exit 1
+}
+install_python_tool git@github.com:0xJs/BobTheSmuggler.git BobTheSmuggler recon
 
 # === 9. Unit6 Healthcheck ===
 cat << 'EOF' | sudo tee /opt/unit6_healthcheck.sh > /dev/null
