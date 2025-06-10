@@ -34,15 +34,15 @@ echo -e "${GREEN}[+] Configuring Docker...${NC}"
 sudo systemctl enable docker --now
 sudo usermod -aG docker "$USER"
 # Installing pipx without the --break-system-packages flag to avoid conflicts with system-managed Python packages
-python3 -m pip install --user pipx
+python3 -m pip install --user pipx --break-system-packages
 # === 3. pipx & Rust Setup ===
 echo -e "${GREEN}[+] Installing CLI tools via pipx...${NC}"
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs/ | sh -s -- -y
 source $HOME/.cargo/env
-python3 -m pip install --user pipx --break-system-packages
-python3 -m pip install --user pipx --break-system-packages
+export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 pipx ensurepath
+hash -r
 hash -r
 pipx install impacket
 pipx install bloodhound-ce
@@ -72,7 +72,7 @@ fi
 sudo mkdir -p /opt/{active-directory,binaries,credential-access,lateral-movement,post-exploitation,recon,webshells}
 sudo chown -R "$USER:$USER" /opt/*
 # === 5. Clone & Set Up Tools ===
-cd /opt/recon && git clone https://github.com/Tib3rius/AutoRecon.git
+cd /opt/recon && [ -d AutoRecon ] || git clone https://github.com/Tib3rius/AutoRecon.git
 cd AutoRecon && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt && deactivate
 
 cd /opt/active-directory && git clone https://github.com/BloodHoundAD/BloodHound.git BloodHoundCE
@@ -81,7 +81,6 @@ cd BloodHoundCE/docker && docker compose -f docker-compose.linux.yml up -d
 # Add Proxmark3 build requirements
 sudo apt install -y \
   gcc-arm-none-eabi \
-make clean && make -j2
   libbz2-dev \
   libssl-dev \
   libclang-dev \
@@ -90,10 +89,7 @@ make clean && make -j2
   
 # === 6. Proxmark3 (RFID Recon) ===
 cd /opt/recon
-git clone https://github.com/RfidResearchGroup/proxmark3.git
-cd proxmark3
-make clean && make -j$(nproc)
-sudo make install
+cd /opt/recon && [ -d proxmark3 ] || git clone https://github.com/RfidResearchGroup/proxmark3.git
 # create global link
 mkdir -p "$HOME/bin"
 # Add Proxmark3 build requirements
@@ -107,13 +103,6 @@ sudo apt install -y \
 
 # === 6. Proxmark3 (RFID Recon) ===
 cd /opt/recon
-git clone https://github.com/RfidResearchGroup/proxmark3.git
-cd proxmark3
-make clean && make -j$(nproc)
-sudo make install
-wget -nc -q https://github.com/jpillora/chisel/releases/download/v1.7.3/chisel_1.7.3_linux_amd64 -O chisel
-chmod +x chisel
-
 # === 8. Python Venv Tools ===
 install_python_tool() {
   REPO=$1; FOLDER=$2; DEST=$3
@@ -176,28 +165,26 @@ else
 fi
 
 # === 11. Final Checks ===
-echo -e "${ORANGE}[!] Rebooting in 60 seconds to finalize setup.${NC}"
 echo -e "${ORANGE}Press 'c' to cancel, 'd' to delay, or any other key to proceed with the reboot.${NC}"
 read -n 1 -t 60 user_input
 if [[ "$user_input" == "c" ]]; then
   echo -e "${GREEN}[+] Reboot canceled.${NC}"
   exit 0
 elif [[ "$user_input" == "d" ]]; then
-# The 'sudo reboot' command restarts the system to apply all changes made during the setup process.
-sudo reboot
   exit 0
 else
   echo -e "${ORANGE}[!] Proceeding with reboot.${NC}"
-  sudo reboot
 fi
-echo -e "${ORANGE}[!] Rebooting in 60 seconds to finalize setup.${NC}"
-echo -e "${ORANGE}Cancel with CTRL+C or run 'init 6' if needed sooner.${NC}"
 sleep 60
-sudo reboot
 elif [[ "$user_input" == "d" ]]; then
   echo -e "${ORANGE}[!] Delaying reboot. Please reboot manually when ready.${NC}"
   exit 0
 else
   echo -e "${ORANGE}[!] Proceeding with reboot.${NC}"
-  sudo reboot
 fi
+
+# === Final Reboot Block ===
+echo -e "${ORANGE}[!] Rebooting in 60 seconds to finalize setup.${NC}"
+echo -e "${ORANGE}Cancel with CTRL+C or run 'init 6' if needed sooner.${NC}"
+sleep 60
+sudo reboot
