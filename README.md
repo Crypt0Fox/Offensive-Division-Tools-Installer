@@ -14,10 +14,7 @@ A plug & play battle-ready arsenal for **Kali Linux** — built for Red Teamers,
 
 ## 🧰 Install
 
-git clone [https://github.com/Crypt0Fox/Offensive-Division-Tool-Installer.git](https://github.com/Crypt0Fox/Offensive-Division-Tool-Installer.git)
-cd Offensive-Division-Tool-Installer
-chmod +x install.sh
-sudo ./install.sh
+sudo  git clone [https://github.com/Crypt0Fox/Offensive-Division-Tools-Installer.git](https://github.com/Crypt0Fox/Offensive-Division-Tools-Installer.git) && cd Offensive-Division-Tool-Installer && chmod +x install.sh && sudo ./install.sh
 
 ## 📎 Tools Deployed
 
@@ -36,7 +33,7 @@ sudo ./install.sh
 ## 🧼 After Install
 
 ✔️ Reboot completes Docker group setup  
-✔️ Type `cmatrix` if you want to feel like a cyber god 😎  
+✔️ Type `cmatrix` if you want to feel like a cyber god 😎 (... or whenever you need to hide your battlescreen 😜)
 ✔️ Enjoy the banner every terminal launch
 
 ## 📜 License
