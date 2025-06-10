@@ -2,9 +2,24 @@
 set -e
 
 # Colors
-GREEN="\033[0;32m"
-ORANGE="\033[0;33m"
+BLACK="\033[0;30m"
+D_GRAY="\033[1;30m"
+L_GRAY="\033[0;37m"
+WHITE="\033[1;37m"
 NC="\033[0m"
+
+RED="\033[0;31m"
+L_RED="\033[1;31m"
+GREEN="\033[0;32m"
+L_GREEN="\033[1;32m"
+ORANGE="\033[0;33m"
+YELLOW="\033[1;33m"
+BLUE="\033[0;34m"
+L_BLUE="\033[1;34m"
+PURPLE="\033[0;35m"
+L_PURPLE="\033[1;35m"
+CYAN="\033[0;36m"
+L_CYAN="\033[1;36m"
 
 # === Environment Setup ===
 export DEBIAN_FRONTEND=noninteractive
@@ -59,14 +74,14 @@ if [ ! -f "$HOME/.ssh/id_ed25519" ]; then
   ssh-keygen -t ed25519 -C "cryptofox@offensive" -f "$HOME/.ssh/id_ed25519" -N ''
   eval "$(ssh-agent -s)"
   ssh-add "$HOME/.ssh/id_ed25519"
-  echo -e "${ORANGE}[!] Add the following SSH key to your GitHub account:${NC}"
+  echo -e "${YELLOW}[!] Add the following SSH key to your GitHub account:${NC}"
   echo "======================================"
   cat "$HOME/.ssh/id_ed25519.pub"
   echo "======================================"
   echo -e "${ORANGE}Visit: https://github.com/settings/keys${NC}"
   read -p "[+] Press Enter after adding the key to continue..."
 else
-  echo -e "${GREEN}[+] SSH key already exists, skipping.${NC}"
+  echo -e "${L-GREEN}[+] SSH key already exists, skipping.${NC}"
 fi
 
 sudo mkdir -p /opt/{active-directory,binaries,credential-access,lateral-movement,post-exploitation,recon,webshells}
@@ -92,21 +107,29 @@ cd /opt/recon
 [ -d /opt/recon/proxmark3/.git ] || git clone https://github.com/RfidResearchGroup/proxmark3.git /opt/recon/proxmark3
 # create global link
 mkdir -p "$HOME/bin"
-# Add Proxmark3 build requirements
-sudo apt install -y \
-  gcc-arm-none-eabi \
-  libbz2-dev \
-  libssl-dev \
-  libclang-dev \
-  libbluetooth-dev \
-  libpython3-dev
 
 # === 8. Python Venv Tools ===
 install_python_tool() {
-  REPO=$1; FOLDER=$2; DEST=$3
-  cd "/opt/$DEST" && git clone "$REPO" "$FOLDER"
-  cd "$FOLDER"; python3 -m venv venv && source venv/bin/activate
-  pip install -r requirements.txt || true
+  REPO=$1
+  FOLDER=$2
+  DEST=$3
+  TARGET="/opt/$DEST/$FOLDER"
+  if [ -d "$TARGET/.git" ]; then
+    echo "[+] $FOLDER already exists, skipping clone."
+  else
+    echo "[+] Cloning $FOLDER into $TARGET..."
+    rm -rf "$TARGET"
+    git clone "$REPO" "$TARGET"
+  fi
+  cd "$TARGET" || { echo "❌ Failed to enter $TARGET"; return 1; }
+  echo "[+] Setting up venv for $FOLDER..."
+  python3 -m venv venv && source venv/bin/activate
+  if [ -f requirements.txt ]; then
+    echo "[+] Installing requirements for $FOLDER..."
+    pip install -r requirements.txt
+  else
+    echo "[!] No requirements.txt found for $FOLDER."
+  fi
   deactivate
 }
 install_python_tool https://github.com/ly4k/Certipy.git Certipy-5.0.2 active-directory
@@ -163,7 +186,7 @@ else
 fi
 
 # === 11. Final Checks ===
-echo -e "${ORANGE}Press 'c' to cancel, 'd' to delay, or any other key to proceed with the reboot.${NC}"
+echo -e "${YELLOW}Press 'c' to cancel, 'd' to delay, or any other key to proceed with the reboot.${NC}"
 read -n 1 -t 60 user_input
 if [[ "$user_input" == "c" ]]; then
   echo -e "${GREEN}[+] Reboot canceled.${NC}"
@@ -174,15 +197,14 @@ else
   echo -e "${ORANGE}[!] Proceeding with reboot.${NC}"
 fi
 sleep 60
-elif [[ "$user_input" == "d" ]]; then
-  echo -e "${ORANGE}[!] Delaying reboot. Please reboot manually when ready.${NC}"
+  echo -e "${GREEN}[!] Delaying reboot. Please reboot manually when ready.${NC}"
   exit 0
 else
   echo -e "${ORANGE}[!] Proceeding with reboot.${NC}"
 fi
 
 # === Final Reboot Block ===
-echo -e "${ORANGE}[!] Rebooting in 60 seconds to finalize setup.${NC}"
-echo -e "${ORANGE}Cancel with CTRL+C or run 'init 6' if needed sooner.${NC}"
+echo -e "${L-GREEN}[!] Rebooting in 60 seconds to finalize setup.${NC}"
+echo -e "${YELLOW}Cancel with CTRL+C or run 'init 6' if needed sooner.${NC}"
 sleep 60
-sudo reboot
+echo -e "${RED}[!] Rebooting Now !.${NC}" && sudo reboot
