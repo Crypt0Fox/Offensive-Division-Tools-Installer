@@ -72,10 +72,10 @@ fi
 sudo mkdir -p /opt/{active-directory,binaries,credential-access,lateral-movement,post-exploitation,recon,webshells}
 sudo chown -R "$USER:$USER" /opt/*
 # === 5. Clone & Set Up Tools ===
-cd /opt/recon && [ -d AutoRecon ] || git clone https://github.com/Tib3rius/AutoRecon.git
+[ -d /opt/recon/AutoRecon/.git ] || git clone https://github.com/Tib3rius/AutoRecon.git /opt/recon/AutoRecon
 cd AutoRecon && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt && deactivate
 
-cd /opt/active-directory && git clone https://github.com/BloodHoundAD/BloodHound.git BloodHoundCE
+[ -d /opt/active-directory/BloodHoundCE/.git ] || git clone https://github.com/BloodHoundAD/BloodHound.git /opt/active-directory/BloodHoundCE
 cd BloodHoundCE/docker && docker compose -f docker-compose.linux.yml up -d
 
 # Add Proxmark3 build requirements
@@ -89,7 +89,7 @@ sudo apt install -y \
   
 # === 6. Proxmark3 (RFID Recon) ===
 cd /opt/recon
-cd /opt/recon && [ -d proxmark3 ] || git clone https://github.com/RfidResearchGroup/proxmark3.git
+[ -d /opt/recon/proxmark3/.git ] || git clone https://github.com/RfidResearchGroup/proxmark3.git /opt/recon/proxmark3
 # create global link
 mkdir -p "$HOME/bin"
 # Add Proxmark3 build requirements
