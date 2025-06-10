@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Colors
+#### Colors ####
 BLACK="\033[0;30m"
 D_GRAY="\033[1;30m"
 L_GRAY="\033[0;37m"
@@ -21,13 +21,20 @@ L_PURPLE="\033[1;35m"
 CYAN="\033[0;36m"
 L_CYAN="\033[1;36m"
 
-# === Environment Setup ===
+## Environment Setup ===
 export DEBIAN_FRONTEND=noninteractive
 
 # === 0. Update & Essentials ===
 echo -e "${GREEN}[+] Updating and installing essentials...${NC}"
 sudo apt update
-read -p "[!] Proceed with full-upgrade? This may remove essential packages. (y/N): " confirm
+
+## Make it timeout or skip safely + Allow bypassing boolean prompts ===
+if [[ "$1" == "-y" ]]; then
+  confirm="y"
+else
+  read -t 10 -p "[!] Proceed with full-upgrade? (y/N, default=N in 10s): " confirm
+  confirm=${confirm:-n}
+fi
 if [[ "$confirm" =~ ^[Yy]$ ]]; then
   sudo apt full-upgrade -y
 else
@@ -48,16 +55,17 @@ echo 'fortune | lolcat' >> ~/.zshrc
 echo -e "${GREEN}[+] Configuring Docker...${NC}"
 sudo systemctl enable docker --now
 sudo usermod -aG docker "$USER"
-# Installing pipx without the --break-system-packages flag to avoid conflicts with system-managed Python packages
+
+## Installing pipx without the --break-system-packages flag to avoid conflicts with system-managed Python packages ===
 python3 -m pip install --user pipx --break-system-packages
+
 # === 3. pipx & Rust Setup ===
 echo -e "${GREEN}[+] Installing CLI tools via pipx...${NC}"
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs/ | sh -s -- -y
-source $HOME/.cargo/env
+[ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
 export PATH="$HOME/.local/bin:$PATH"
-export PATH="$HOME/.local/bin:$PATH"
+sleep 2 && hash -r
 pipx ensurepath
-hash -r
 hash -r
 pipx install impacket
 pipx install bloodhound-ce
@@ -68,7 +76,7 @@ pipx install git+https://github.com/garrettfoster13/sccmhunter
 # === 4. Create /opt Layout ===
 echo -e "${GREEN}[+] Creating tool directories...${NC}"
 
-# === SSH Key Setup ===
+## SSH Key Setup ===
 if [ ! -f "$HOME/.ssh/id_ed25519" ]; then
   echo -e "${GREEN}[+] Generating SSH key...${NC}"
   ssh-keygen -t ed25519 -C "cryptofox@offensive" -f "$HOME/.ssh/id_ed25519" -N ''
@@ -81,19 +89,34 @@ if [ ! -f "$HOME/.ssh/id_ed25519" ]; then
   echo -e "${ORANGE}Visit: https://github.com/settings/keys${NC}"
   read -p "[+] Press Enter after adding the key to continue..."
 else
-  echo -e "${L-GREEN}[+] SSH key already exists, skipping.${NC}"
+  echo -e "${L_GREEN}[+] SSH key already exists, skipping.${NC}"
 fi
-
 sudo mkdir -p /opt/{active-directory,binaries,credential-access,lateral-movement,post-exploitation,recon,webshells}
 sudo chown -R "$USER:$USER" /opt/*
+
 # === 5. Clone & Set Up Tools ===
 [ -d /opt/recon/AutoRecon/.git ] || git clone https://github.com/Tib3rius/AutoRecon.git /opt/recon/AutoRecon
-cd AutoRecon && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt && deactivate
-
+if [ -d /opt/recon/AutoRecon ]; then
+  cd /opt/recon/AutoRecon
+  python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt && deactivate
+else
+  echo "[!] AutoRecon clone failed or missing."
+fi
+if [ -d /opt/recon/AutoRecon ]; then
+  cd /opt/recon/AutoRecon
+  python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt && deactivate
+else
+  echo "[!] AutoRecon clone failed or missing."
+fi
 [ -d /opt/active-directory/BloodHoundCE/.git ] || git clone https://github.com/BloodHoundAD/BloodHound.git /opt/active-directory/BloodHoundCE
-cd BloodHoundCE/docker && docker compose -f docker-compose.linux.yml up -d
+if [ -d /opt/active-directory/BloodHoundCE/docker ]; then
+  cd /opt/active-directory/BloodHoundCE/docker
+  docker compose -f docker-compose.linux.yml up -d
+else
+  echo "[!] BloodHoundCE/docker not found. Clone may have failed."
+fi
 
-# Add Proxmark3 build requirements
+## Add Proxmark3 build requirements ===
 sudo apt install -y \
   gcc-arm-none-eabi \
   libbz2-dev \
@@ -101,12 +124,15 @@ sudo apt install -y \
   libclang-dev \
   libbluetooth-dev \
   libpython3-dev
-  
+
 # === 6. Proxmark3 (RFID Recon) ===
 cd /opt/recon
 [ -d /opt/recon/proxmark3/.git ] || git clone https://github.com/RfidResearchGroup/proxmark3.git /opt/recon/proxmark3
-# create global link
+
+# === 7. create global link ===
 mkdir -p "$HOME/bin"
+ln -s /opt/recon/proxmark3/client/proxmark3 "$HOME/bin/proxmark3"
+echo 'export PATH="$HOME/bin:$PATH"' >> "$HOME/.zshrc"
 
 # === 8. Python Venv Tools ===
 install_python_tool() {
@@ -133,7 +159,7 @@ install_python_tool() {
   deactivate
 }
 install_python_tool https://github.com/ly4k/Certipy.git Certipy-5.0.2 active-directory
-install_python_tool https://github.com/0xJs/BobTheSmuggler.git BobTheSmuggler recon
+install_python_tool git@github.com:0xJs/BobTheSmuggler.git BobTheSmuggler recon
 
 # === 9. Unit6 Healthcheck ===
 cat << 'EOF' | sudo tee /opt/unit6_healthcheck.sh > /dev/null
@@ -141,12 +167,10 @@ cat << 'EOF' | sudo tee /opt/unit6_healthcheck.sh > /dev/null
 LOG="/var/log/unit6_healthcheck.log"
 echo "=== $(date) ===" >> "$LOG"
 if systemctl is-active --quiet docker; then echo "Docker OK" >> "$LOG"; else echo "Docker FAIL — restarting" >> "$LOG" && systemctl restart docker; fi
-if docker ps --filter "name=bloodhound_ce" --filter "status=running" | grep -q .; then echo "BloodHound OK" >> "$LOG"; else echo "BloodHound FAIL — bringing up" >> "$LOG" && cd /opt/active-directory/BloodHoundCE/docker && docker compose -f docker-compose.linux.yml up -d >> "$LOG" 2>&1; fi
+if docker ps --filter "ancestor=bloodhoundad/bloodhound-ce" --filter "status=running" | grep -q .; then echo "BloodHound OK" >> "$LOG"; else echo "BloodHound FAIL — bringing up" >> "$LOG" && cd /opt/active-directory/BloodHoundCE/docker && docker compose -f docker-compose.linux.yml up -d >> "$LOG" 2>&1; fi
 echo "" >> "$LOG"
 EOF
-
 sudo chmod +x /opt/unit6_healthcheck.sh
-
 cat << 'EOF' | sudo tee /etc/systemd/system/unit6-healthcheck.service > /dev/null
 [Unit]
 Description=Unit6 Offensive Tools Healthcheck
@@ -157,7 +181,6 @@ Type=oneshot
 [Install]
 WantedBy=multi-user.target
 EOF
-
 cat << 'EOF' | sudo tee /etc/systemd/system/unit6-healthcheck.timer > /dev/null
 [Unit]
 Description=Daily Unit6 Healthcheck Timer
@@ -168,7 +191,6 @@ Persistent=true
 [Install]
 WantedBy=timers.target
 EOF
-
 sudo systemctl daemon-reexec
 sudo systemctl daemon-reload
 sudo systemctl enable --now unit6-healthcheck.timer
@@ -185,7 +207,7 @@ else
   echo "No packages in 'rc' state to purge."
 fi
 
-# === 11. Final Checks ===
+# === 11. Final Checks + Reboot Block ===
 echo -e "${YELLOW}Press 'c' to cancel, 'd' to delay, or any other key to proceed with the reboot.${NC}"
 read -n 1 -t 60 user_input
 if [[ "$user_input" == "c" ]]; then
@@ -194,17 +216,8 @@ if [[ "$user_input" == "c" ]]; then
 elif [[ "$user_input" == "d" ]]; then
   exit 0
 else
-  echo -e "${ORANGE}[!] Proceeding with reboot.${NC}"
+  echo -e "${L_GREEN}[!] Rebooting in 60 seconds to finalize setup.${NC}"
+  echo -e "${YELLOW}Cancel with CTRL+C or run 'init 6' if needed sooner.${NC}"
 fi
-sleep 60
-  echo -e "${GREEN}[!] Delaying reboot. Please reboot manually when ready.${NC}"
-  exit 0
-else
-  echo -e "${ORANGE}[!] Proceeding with reboot.${NC}"
-fi
-
-# === Final Reboot Block ===
-echo -e "${L-GREEN}[!] Rebooting in 60 seconds to finalize setup.${NC}"
-echo -e "${YELLOW}Cancel with CTRL+C or run 'init 6' if needed sooner.${NC}"
 sleep 60
 echo -e "${RED}[!] Rebooting Now !.${NC}" && sudo reboot
