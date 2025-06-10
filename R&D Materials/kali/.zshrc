@@ -262,6 +262,7 @@ fi
 # === Terminal Banner & Fortune ===
 if command -v figlet >/dev/null && command -v lolcat >/dev/null; then
   figlet -f slant "CryptoFox"
+  fortune | lolcat
 fi
 
 if command -v fortune >/dev/null && command -v lolcat >/dev/null; then
@@ -285,41 +286,9 @@ alias matrix='cmatrix -s -C green'
 
 
 # === Prompt ===
-fortune
 ####export PS1='\[\e[35m\][\[\e[0m\]\[\e[31m\]\u\[\e[0m\]\[\e[33m\]@\[\e[0m\]\[\e[32m\]\h\[\e[0m\]:\[\e[34m\]\w\[\e[35m\]]\[\e[36m\]\$\[\e[0m\]'
 
 
 # === Environment Sources ===
 cd
 [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
-
-eval "$(starship init zsh)"
-figlet "STAY SHARP" | lolcat
-fortune | lolcat
-eval "$(starship init zsh)"
-figlet "STAY SHARP" | lolcat
-fortune | lolcat
-eval "$(starship init zsh)"
-figlet "STAY SHARP" | lolcat
-fortune | lolcat
-eval "$(starship init zsh)"
-figlet "STAY SHARP" | lolcat
-fortune | lolcat
-eval "$(starship init zsh)"
-figlet "STAY SHARP" | lolcat
-fortune | lolcat
-eval "$(starship init zsh)"
-figlet "STAY SHARP" | lolcat
-fortune | lolcat
-eval "$(starship init zsh)"
-figlet "STAY SHARP" | lolcat
-fortune | lolcat
-eval "$(starship init zsh)"
-figlet "STAY SHARP" | lolcat
-fortune | lolcat
-eval "$(starship init zsh)"
-figlet "STAY SHARP" | lolcat
-fortune | lolcat
-eval "$(starship init zsh)"
-figlet "STAY SHARP" | lolcat
-fortune | lolcat
