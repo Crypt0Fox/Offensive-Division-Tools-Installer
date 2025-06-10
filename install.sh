@@ -159,7 +159,7 @@ install_python_tool() {
   deactivate
 }
 install_python_tool https://github.com/ly4k/Certipy.git Certipy-5.0.2 active-directory
-install_python_tool git@github.com:0xJs/BobTheSmuggler.git BobTheSmuggler recon
+install_python_tool https://github.com/0xJs/BobTheSmuggler.git BobTheSmuggler recon
 
 # === 9. Unit6 Healthcheck ===
 cat << 'EOF' | sudo tee /opt/unit6_healthcheck.sh > /dev/null
