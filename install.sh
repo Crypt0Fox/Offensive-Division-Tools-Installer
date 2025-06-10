@@ -101,8 +101,6 @@ sudo apt install -y \
   libbluetooth-dev \
   libpython3-dev
 
-# === 6. Proxmark3 (RFID Recon) ===
-cd /opt/recon
 # === 8. Python Venv Tools ===
 install_python_tool() {
   REPO=$1; FOLDER=$2; DEST=$3
