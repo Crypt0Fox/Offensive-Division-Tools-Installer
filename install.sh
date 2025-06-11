@@ -32,7 +32,7 @@ sudo apt update
 if [[ "$1" == "-y" ]]; then
   confirm="y"
 else
-read -t 10 -p "${YELLOW}[!] Proceed with full-upgrade? (y/N, default=N in 10s): ${NC}" confirm || confirm="n"
+read -t 10 -p "${RED}[!] Proceed with full-upgrade? (y/N, default=N in 10s): ${NC}" confirm || confirm="n"
 confirm=${confirm:-n}
 fi
 if [[ "$confirm" =~ ^[Yy]$ ]]; then
@@ -43,8 +43,8 @@ else
 fi
 sudo apt install -y \
   isc-dhcp-client curl wget git unzip python3 python3-pip python3-venv build-essential \
-  jq net-tools docker.io docker-compose pipx cmatrix lolcat figlet zsh fzf bat ripgrep \
-  fortune gedit libreadline-dev libusb-0.1-4 pkg-config libpcsclite-dev pcscd
+  jq net-tools docker.io docker-compose pipx cmatrix lolcat figlet  zsh fzf bat ripgrep \
+  fortune gedit libreadline-dev libusb-0.1-4 pkg-config libpcsclite-dev pcscd starship
 
 # === 1. Shell & Aesthetics ===
 #echo 'eval "$(starship init zsh)"' >> ~/.zshrc
