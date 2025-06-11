@@ -47,9 +47,9 @@ sudo apt install -y \
   fortune gedit libreadline-dev libusb-0.1-4 pkg-config libpcsclite-dev pcscd
 
 # === 1. Shell & Aesthetics ===
-echo 'eval "$(starship init zsh)"' >> ~/.zshrc
-echo 'figlet "STAY SHARP" | lolcat' >> ~/.zshrc
-echo 'fortune | lolcat' >> ~/.zshrc
+#echo 'eval "$(starship init zsh)"' >> ~/.zshrc
+#echo 'figlet "STAY SHARP" | lolcat' >> ~/.zshrc
+#echo 'fortune | lolcat' >> ~/.zshrc
 
 # === 2. Docker Setup ===
 echo -e "${GREEN}[+] Configuring Docker...${NC}"
@@ -102,13 +102,12 @@ if [ -d /opt/recon/AutoRecon ]; then
 else
   echo "[!] AutoRecon clone failed or missing."
 fi
-[ -d /opt/active-directory/BloodHoundCE/.git ] || git clone https://github.com/SpecterOps/BloodHoundCE.git /opt/active-directory/BloodHoundCE
-if [ -d /opt/active-directory/BloodHoundCE/docker ]; then
-  cd /opt/active-directory/BloodHoundCE/deploy
-  docker compose up -d  
-else
-  echo "[!] BloodHoundCE/docker not found. Clone may have failed."
-fi
+[ -d /opt/active-directory/BloodHoundCE/.git ] || (
+  cd /opt/active-directory/BloodHoundCE && \
+  wget https://github.com/SpecterOps/bloodhound-cli/releases/latest/download/bloodhound-cli-linux-amd64.tar.gz && \
+  tar -xvzf bloodhound-cli-linux-amd64.tar.gz && \
+  ./bloodhound-cli install | tee bloodhound_install.log
+)
 
 ## Add Proxmark3 build requirements ===
 sudo apt install -y \
@@ -158,7 +157,7 @@ ssh -T git@github.com 2>&1 | grep -q 'successfully authenticated' || {
   echo "${YELLOW}Visit: https://github.com/settings/keys${NC}"
   exit 1
 }
-install_python_tool git@github.com:0xJs/BobTheSmuggler.git BobTheSmuggler recon
+install_python_tool git@github.com/TheCyb3rAlpha/BobTheSmuggler.git BobTheSmuggler recon
 
 # === 9. Unit6 Healthcheck ===
 cat << 'EOF' | sudo tee /opt/unit6_healthcheck.sh > /dev/null
