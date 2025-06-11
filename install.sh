@@ -102,12 +102,6 @@ if [ -d /opt/recon/AutoRecon ]; then
 else
   echo "[!] AutoRecon clone failed or missing."
 fi
-if [ -d /opt/recon/AutoRecon ]; then
-  cd /opt/recon/AutoRecon
-  python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt && deactivate
-else
-  echo "[!] AutoRecon clone failed or missing."
-fi
 [ -d /opt/active-directory/BloodHoundCE/.git ] || git clone https://github.com/SpecterOps/BloodHoundCE.git /opt/active-directory/BloodHoundCE
 if [ -d /opt/active-directory/BloodHoundCE/docker ]; then
   cd /opt/active-directory/BloodHoundCE/deploy
@@ -172,7 +166,13 @@ cat << 'EOF' | sudo tee /opt/unit6_healthcheck.sh > /dev/null
 LOG="/var/log/unit6_healthcheck.log"
 echo "=== $(date) ===" >> "$LOG"
 if systemctl is-active --quiet docker; then echo "Docker OK" >> "$LOG"; else echo "Docker FAIL — restarting" >> "$LOG" && systemctl restart docker; fi
-if docker ps --filter "ancestor=bloodhoundad/bloodhound-ce" --filter "status=running" | grep -q .; then echo "BloodHound OK" >> "$LOG"; else echo "BloodHound FAIL — bringing up" >> "$LOG" && cd /opt/active-directory/BloodHoundCE/docker && docker compose -f docker-compose.linux.yml up -d >> "$LOG" 2>&1; fi
+if docker ps --filter "ancestor=bloodhoundad/bloodhound-ce" --filter "status=running" | grep -q .; then echo "BloodHound OK" >> "$LOG"; else echo "BloodHound FAIL — bringing up" >> "$LOG" && if [ -d /opt/active-directory/BloodHoundCE/docker ]; then
+  cd /opt/active-directory/BloodHoundCE/docker
+  docker compose -f docker-compose.linux.yml up -d
+else
+  echo "[!] BloodHoundCE/docker not found. Clone may have failed."
+fi
+ >> "$LOG" 2>&1; fi
 echo "" >> "$LOG"
 EOF
 sudo chmod +x /opt/unit6_healthcheck.sh
