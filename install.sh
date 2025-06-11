@@ -32,8 +32,8 @@ sudo apt update
 if [[ "$1" == "-y" ]]; then
   confirm="y"
 else
-  read -t 10 -p "[!] Proceed with full-upgrade? (y/N, default=N in 10s): " confirm
-  confirm=${confirm:-n}
+read -t 10 -p "${YELLOW}[!] Proceed with full-upgrade? (y/N, default=N in 10s): ${NC}" confirm || confirm="n"
+confirm=${confirm:-n}
 fi
 if [[ "$confirm" =~ ^[Yy]$ ]]; then
   sudo apt full-upgrade -y
@@ -157,7 +157,7 @@ ssh -T git@github.com 2>&1 | grep -q 'successfully authenticated' || {
   echo "${YELLOW}Visit: https://github.com/settings/keys${NC}"
   exit 1
 }
-install_python_tool git@github.com/TheCyb3rAlpha/BobTheSmuggler.git BobTheSmuggler recon
+install_python_tool https://github.com/TheCyb3rAlpha/BobTheSmuggler.git BobTheSmuggler recon
 
 # === 9. Unit6 Healthcheck ===
 cat << 'EOF' | sudo tee /opt/unit6_healthcheck.sh > /dev/null
