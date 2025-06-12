@@ -9,19 +9,19 @@ set -e
 #### GitHub SSH fingerprint fix ####
 echo "[*] Fixing GitHub SSH fingerprints..."
 {
-    declare -A GITHUB_KEYS
-    GITHUB_KEYS["rsa"]="SHA256:nThbg6PZs1u6jl8EY8vR3vM5NlHfa79G/nd8f1Lj9Wg"
-    GITHUB_KEYS["ecdsa"]="SHA256:p2QAMXNIC1TJYWeIOttrVc98/R1BUFWu3/LiyKgUfQM"
-    GITHUB_KEYS["ed25519"]="SHA256:+DiYx5C9FjI1sLdfNzsQ2oP89t6P8j0ymS4DIdFzM1w"
-    ssh-keygen -R github.com >/dev/null 2>&1
-    ssh-keyscan github.com 2>/dev/null | tee -a ~/.ssh/known_hosts > /tmp/github_keys
-    while read -r line; do
-        kt=$(echo "$line" | awk '{print $2}')
-        fp=$(echo "$line" | ssh-keygen -lf - | awk '{print $2}')
-        [[ "${GITHUB_KEYS[$kt]}" == "$fp" ]] && echo "[+] $kt fingerprint verified" || echo "[!] $kt fingerprint mismatch"
-    done < /tmp/github_keys
-    rm -f /tmp/github_keys
-    echo "[✓] GitHub SSH check complete."
+  declare -A GITHUB_KEYS
+  GITHUB_KEYS["rsa"]="SHA256:nThbg6PZs1u6jl8EY8vR3vM5NlHfa79G/nd8f1Lj9Wg"
+  GITHUB_KEYS["ecdsa"]="SHA256:p2QAMXNIC1TJYWeIOttrVc98/R1BUFWu3/LiyKgUfQM"
+  GITHUB_KEYS["ed25519"]="SHA256:+DiYx5C9FjI1sLdfNzsQ2oP89t6P8j0ymS4DIdFzM1w"
+  ssh-keygen -R github.com >/dev/null 2>&1
+  timeout 5s ssh-keyscan github.com 2>/dev/null | tee -a ~/.ssh/known_hosts > /tmp/github_keys
+  while read -r line; do
+      kt=$(echo "$line" | awk '{print $2}')
+      fp=$(echo "$line" | ssh-keygen -lf - | awk '{print $2}')
+      [[ "${GITHUB_KEYS[$kt]}" == "$fp" ]] && echo "[+] $kt fingerprint verified" || echo "[!] $kt fingerprint mismatch"
+  done < /tmp/github_keys
+  rm -f /tmp/github_keys
+  echo "[✓] GitHub SSH check complete."
 }
 
 #### Colors ####
