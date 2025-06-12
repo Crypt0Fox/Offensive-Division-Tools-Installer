@@ -1,29 +1,5 @@
 #!/bin/bash
 
-#### Environment Setup ####
-export DEBIAN_FRONTEND=noninteractive
-export NEEDRESTART_MODE=a
-echo '* libraries/restart-without-asking boolean true' | sudo debconf-set-selections
-set -e
-
-#### GitHub SSH fingerprint fix ####
-echo "[*] Fixing GitHub SSH fingerprints..."
-{
-  declare -A GITHUB_KEYS
-  GITHUB_KEYS["rsa"]="SHA256:nThbg6PZs1u6jl8EY8vR3vM5NlHfa79G/nd8f1Lj9Wg"
-  GITHUB_KEYS["ecdsa"]="SHA256:p2QAMXNIC1TJYWeIOttrVc98/R1BUFWu3/LiyKgUfQM"
-  GITHUB_KEYS["ed25519"]="SHA256:+DiYx5C9FjI1sLdfNzsQ2oP89t6P8j0ymS4DIdFzM1w"
-  ssh-keygen -R github.com >/dev/null 2>&1
-  timeout 5s ssh-keyscan github.com 2>/dev/null | tee -a ~/.ssh/known_hosts > /tmp/github_keys
-  while read -r line; do
-      kt=$(echo "$line" | awk '{print $2}')
-      fp=$(echo "$line" | ssh-keygen -lf - | awk '{print $2}')
-      [[ "${GITHUB_KEYS[$kt]}" == "$fp" ]] && echo "[+] $kt fingerprint verified" || echo "[!] $kt fingerprint mismatch"
-  done < /tmp/github_keys
-  rm -f /tmp/github_keys
-  echo "[✓] GitHub SSH check complete."
-}
-
 #### Colors ####
 NC="\033[0m"
 BLACK="\033[0;30m"
@@ -43,8 +19,40 @@ L_PURPLE="\033[1;35m"
 CYAN="\033[0;36m"
 L_CYAN="\033[1;36m"
 
+#### Environment Setup ####
+export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
+echo -e "${YELLOW}[*] libraries/restart-without-asking boolean true.${NC}" | sudo debconf-set-selections
+set -e
+
+#### GitHub SSH fingerprint fix ####
+echo "${YELLOW}[!] Fixing GitHub SSH fingerprints...${NC}"
+
+# Fetch and verify GitHub SSH fingerprints
+declare -A GITHUB_KEYS
+GITHUB_KEYS["rsa"]="SHA256:nThbg6z1Yx3Y1s6J1j8EY8V3R3VM5NlH4r9QCnd6F1lg"
+GITHUB_KEYS["ecdsa"]="SHA256:p2QAMXNIC1TJYWeIOttrVc98/R1BUFWu3/LiyKgUfQM"
+GITHUB_KEYS["ed25519"]="SHA256:Hi1sPfbx91Q6sXQpF1s1dFfNZSQ2oP8gtG8j09m4sDYI"
+
+# Timeout and validate
+if ! timeout 5s ssh-keyscan github.com 2>/dev/null | tee /tmp/github_keys | tee -a ~/.ssh/known_hosts > /dev/null; then
+  echo -e "${RED}[X] Failed to fetch GitHub SSH keys. Exiting.${NC}"
+  exit 1
+fi
+
+while read -r line; do
+  kt=$(echo "$line" | awk '{print $2}')
+  fp=$(echo "$line" | ssh-keygen -lf - | awk '{print $2}')
+  [[ "${GITHUB_KEYS[$kt]}" == "$fp" ]] && \
+    echo -e "${GREEN}[+] $kt fingerprint verified.${NC}" || \
+    echo -e "${RED}[X] $kt fingerprint mismatch.${NC}"
+done < /tmp/github_keys
+
+rm -f /tmp/github_keys
+echo -e "${L_GREEN}[✓] GitHub SSH check complete.${NC}"
+
 # === 0. Update & Essentials ===
-echo -e "${YELLOW}[+] Setting time zone to Asia/Jerusalem...${NC}"
+echo -e "${GREEN}[+] Setting time zone to Asia/Jerusalem...${NC}"
 sudo timedatectl set-timezone Asia/Jerusalem
 sudo timedatectl set-ntp true
 echo -e "${GREEN}[+] Updating and installing essentials...${NC}"
@@ -64,7 +72,7 @@ fi
 if [[ "$confirm" =~ ^[Yy]$ ]]; then
   sudo apt full-upgrade -y
 else
-  echo "[!] Skipping full-upgrade. Proceeding with regular upgrade."
+  echo -e "${YELLOW}[!] Skipping full-upgrade. Proceeding with regular upgrade.${NC}"
   sudo apt upgrade -y
 fi
 sudo apt install -y \
@@ -112,11 +120,10 @@ if [ ! -f "$HOME/.ssh/id_ed25519" ]; then
   echo "======================================"
   cat "$HOME/.ssh/id_ed25519.pub"
   echo "======================================"
-  echo -e "${ORANGE}Visit: https://github.com/settings/keys${NC}"
-  #### read -p "${RED}[+] Press Enter ${NC}${RED}ONLY after adding the key ${NC}${YELLOW}to continue...${NC}"   <--- [need to fix]
+  echo -e "${BLUE}Visit: https://github.com/settings/keys${NC}"
   read -p "[+] Press Enter ONLY after adding the key to continue..."
 else
-  echo -e "${L_GREEN}[+] SSH key already exists, skipping.${NC}"
+  echo -e "${L_GREEN}[✓] SSH key already exists, skipping.${NC}"
 fi
 sudo mkdir -p /opt/{active-directory,binaries,credential-access,lateral-movement,post-exploitation,recon,webshells}
 sudo chown -R "$USER:$USER" /opt/*
@@ -127,7 +134,7 @@ if [ -d /opt/recon/AutoRecon ]; then
   cd /opt/recon/AutoRecon
   python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt && deactivate
 else
-  echo -e "${RED}[!] AutoRecon clone failed or missing.${NC}"
+  echo -e "${RED}[X] AutoRecon clone failed or missing.${NC}"
 fi
 if [ ! -d /opt/active-directory/BloodHoundCE ]; then
   mkdir -p /opt/active-directory/BloodHoundCE
@@ -162,9 +169,9 @@ install_python_tool() {
   DEST=$3
   TARGET="/opt/$DEST/$FOLDER"
   if [ -d "$TARGET/.git" ]; then
-    echo -e "${L_GREEN}[+] $FOLDER already exists, skipping clone.${NC}"
+    echo -e "${L_GREEN}[✓] $FOLDER already exists, skipping clone.${NC}"
   else
-    echo -e "${YELLOW}[+] Cloning $FOLDER into $TARGET...${NC}"
+    echo -e "${YELLOW}[!] Cloning $FOLDER into $TARGET...${NC}"
     rm -rf "$TARGET"
     git clone "$REPO" "$TARGET"
   fi
@@ -175,7 +182,7 @@ install_python_tool() {
     echo -e "${GREEN}[+] Installing requirements for $FOLDER...${NC}"
     pip install -r requirements.txt
   else
-    echo -e "${L_GREEN}[!] No requirements.txt found for $FOLDER.${NC}"
+    echo -e "${YELLOW}[!] No requirements.txt found for $FOLDER.${NC}"
   fi
   deactivate
 }
@@ -186,21 +193,21 @@ GITHUB_KEY_KNOWN=$(ssh-keyscan github.com 2>/dev/null | grep '^github.com ' | sh
 GITHUB_KEY_EXPECTED="e11d52c9bbdbf40c1c2e6b12f9a1b1b3c15c9c72ae8e1df9897656b4246b8c68"  # GitHub ED25519 as of 2024
 
 if [[ "$GITHUB_KEY_KNOWN" == "$GITHUB_KEY_EXPECTED" ]]; then
-  echo -e "${L_GREEN}[+] GitHub host key verified. Adding to known_hosts...${NC}"
+  echo -e "${L_GREEN}[✓] GitHub host key verified. Adding to known_hosts...${NC}"
   mkdir -p ~/.ssh
   ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
   chmod 600 ~/.ssh/known_hosts
 else
-  echo -e "${RED}[!] GitHub SSH key fingerprint mismatch!${NC}"
+  echo -e "${RED}[X] GitHub SSH key fingerprint mismatch!${NC}"
   echo -e "${YELLOW}    Expected: $GITHUB_KEY_EXPECTED${NC}"
   echo -e "${YELLOW}    Got:      $GITHUB_KEY_KNOWN${NC}"
-  echo -e "${RED}    Aborting to prevent MITM risk.${NC}"
+  echo -e "${L_RED}    Aborting to prevent MITM risk.${NC}"
   exit 1
 fi
 
 ssh -T git@github.com 2>&1 | grep -q 'successfully authenticated' || {
-  echo -e "${RED}[!] SSH key not registered on GitHub. Please add it first.${NC}"
-  echo -e "${YELLOW}Visit: https://github.com/settings/keys${NC}"
+  echo -e "${RED}[X] SSH key not registered on GitHub. Please add it first.${NC}"
+  echo -e "${BLUE}Visit: https://github.com/settings/keys${NC}"
   exit 1
 }
 install_python_tool https://github.com/TheCyb3rAlpha/BobTheSmuggler.git BobTheSmuggler recon
@@ -215,7 +222,7 @@ if docker ps --filter "ancestor=bloodhoundad/bloodhound-ce" --filter "status=run
   cd /opt/active-directory/BloodHoundCE/docker
   docker compose -f docker-compose.linux.yml up -d
 else
-  echo -e "${RED}[!] BloodHoundCE/docker not found. Clone may have failed.${NC}"
+  echo -e "${RED}[X] BloodHoundCE/docker not found. Clone may have failed.${NC}"
 fi
  >> "$LOG" 2>&1; fi
 echo "" >> "$LOG"
@@ -261,7 +268,7 @@ fi
 if [[ "$1" == "--auto" ]]; then
   user_input=""
 else
-  echo -e "${YELLOW}Press 'c' to cancel, 'd' to delay, or any other key to proceed with the reboot.${NC}"
+  echo -e "${ORANGE}Press 'c' to cancel, 'd' to delay, or any other key to proceed with the reboot.${NC}"
   read -n 1 -t 60 user_input
 fi
 if [[ "$user_input" == "c" ]]; then
@@ -270,8 +277,8 @@ if [[ "$user_input" == "c" ]]; then
 elif [[ "$user_input" == "d" ]]; then
   exit 0
 else
-  echo -e "${L_GREEN}[!] Rebooting in 60 seconds to finalize setup.${NC}"
-  echo -e "${YELLOW}Cancel with CTRL+C ; or run ${NC}${RED}'sudo reboot' ${NC}${YELLOW}if needed sooner (${NC}${RED}o${NC}^${YELLOW}_${NC}^${RED}o${NC}${YELLOW})${NC}"
+  echo -e "${YELLOW}[!] Rebooting in 60 seconds to finalize setup.${NC}"
+  echo -e "${ORANGE}Cancel with CTRL+C ; or run ${NC}${RED}'sudo reboot' ${NC}${YELLOW}if needed sooner (${NC}${RED}o${NC}^${YELLOW}_${NC}^${RED}o${NC}${YELLOW})${NC}"
 fi
 sleep 60
-echo -e "${RED}[!] Rebooting Now !${NC}" && sudo reboot
+echo -e "${L_GREEN}[✓] Rebooting Now !${NC}" && sudo reboot
