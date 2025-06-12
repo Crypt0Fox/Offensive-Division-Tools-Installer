@@ -2,11 +2,12 @@
 set -e
 
 #### Colors ####
+NC="\033[0m"
 BLACK="\033[0;30m"
 D_GRAY="\033[1;30m"
 L_GRAY="\033[0;37m"
 WHITE="\033[1;37m"
-NC="\033[0m"
+
 
 RED="\033[0;31m"
 L_RED="\033[1;31m"
@@ -23,8 +24,12 @@ L_CYAN="\033[1;36m"
 
 ## Environment Setup ===
 export DEBIAN_FRONTEND=noninteractive
+echo '* libraries/restart-without-asking boolean true' | sudo debconf-set-selections
 
 # === 0. Update & Essentials ===
+echo -e "${YELLOW}[+] Setting time zone to Asia/Jerusalem...${NC}"
+sudo timedatectl set-timezone Asia/Jerusalem
+sudo timedatectl set-ntp true
 echo -e "${GREEN}[+] Updating and installing essentials...${NC}"
 sudo apt update
 
@@ -102,12 +107,13 @@ if [ -d /opt/recon/AutoRecon ]; then
 else
   echo "[!] AutoRecon clone failed or missing."
 fi
-[ -d /opt/active-directory/BloodHoundCE/.git ] || (
-  cd /opt/active-directory/BloodHoundCE && \
-  wget https://github.com/SpecterOps/bloodhound-cli/releases/latest/download/bloodhound-cli-linux-amd64.tar.gz && \
-  tar -xvzf bloodhound-cli-linux-amd64.tar.gz && \
-  ./bloodhound-cli install | tee bloodhound_install.log
-)
+if [ ! -d /opt/active-directory/BloodHoundCE ]; then
+  mkdir -p /opt/active-directory/BloodHoundCE
+fi
+cd /opt/active-directory/BloodHoundCE && \
+wget https://github.com/SpecterOps/bloodhound-cli/releases/latest/download/bloodhound-cli-linux-amd64.tar.gz && \
+tar -xvzf bloodhound-cli-linux-amd64.tar.gz && \
+./bloodhound-cli install | tee bloodhound_install.log
 
 ## Add Proxmark3 build requirements ===
 sudo apt install -y \
