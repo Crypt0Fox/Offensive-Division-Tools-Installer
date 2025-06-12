@@ -22,11 +22,13 @@ L_CYAN="\033[1;36m"
 #### Environment Setup ####
 export DEBIAN_FRONTEND=noninteractive
 export NEEDRESTART_MODE=a
-echo -e "${YELLOW}[*] libraries/restart-without-asking boolean true.${NC}" | sudo debconf-set-selections
+echo -e "${ORANGE}[*] Suppressing service restart prompts (libc6, needrestart)...${NC}"
+echo "libc6 libraries/restart-without-asking boolean true" | sudo debconf-set-selections
+echo "needrestart needrestart/restart string a" | sudo debconf-set-selections
 set -e
 
 #### GitHub SSH fingerprint fix ####
-echo "${YELLOW}[!] Fixing GitHub SSH fingerprints...${NC}"
+echo -e "${YELLOW}[!] Fixing GitHub SSH fingerprints...${NC}"
 
 # Fetch and verify GitHub SSH fingerprints
 declare -A GITHUB_KEYS
@@ -41,11 +43,16 @@ if ! timeout 5s ssh-keyscan github.com 2>/dev/null | tee /tmp/github_keys | tee 
 fi
 
 while read -r line; do
-  kt=$(echo "$line" | awk '{print $2}')
-  fp=$(echo "$line" | ssh-keygen -lf - | awk '{print $2}')
-  [[ "${GITHUB_KEYS[$kt]}" == "$fp" ]] && \
-    echo -e "${GREEN}[+] $kt fingerprint verified.${NC}" || \
-    echo -e "${RED}[X] $kt fingerprint mismatch.${NC}"
+  key_type=$(echo "$line" | awk '{print $2}')
+  pub_key=$(echo "$line" | cut -d' ' -f2-)
+  fingerprint=$(echo "$line" | ssh-keygen -lf /dev/stdin <<< "$line" | awk '{print $2}')
+  expected_fp="${GITHUB_KEYS[$key_type]}"
+
+  if [[ "$fingerprint" == "$expected_fp" ]]; then
+    echo -e "${GREEN}[+] $key_type fingerprint verified.${NC}"
+  else
+    echo -e "${RED}[X] $key_type fingerprint mismatch.${NC}"
+  fi
 done < /tmp/github_keys
 
 rm -f /tmp/github_keys
@@ -77,7 +84,7 @@ else
 fi
 sudo apt install -y \
   isc-dhcp-client curl wget git unzip python3 python3-pip python3-venv build-essential \
-  jq net-tools docker.io docker-compose pipx cmatrix lolcat figlet  zsh fzf bat ripgrep \
+  jq net-tools docker.io docker-compose cmatrix lolcat figlet  zsh fzf bat ripgrep \
   fortune gedit libreadline-dev libusb-0.1-4 pkg-config libpcsclite-dev pcscd starship
 
 # === 1. Shell & Aesthetics ===
@@ -195,7 +202,7 @@ GITHUB_KEY_EXPECTED="e11d52c9bbdbf40c1c2e6b12f9a1b1b3c15c9c72ae8e1df9897656b4246
 if [[ "$GITHUB_KEY_KNOWN" == "$GITHUB_KEY_EXPECTED" ]]; then
   echo -e "${L_GREEN}[✓] GitHub host key verified. Adding to known_hosts...${NC}"
   mkdir -p ~/.ssh
-  ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
+  ssh-keyscan github.com | grep -v -f ~/.ssh/known_hosts - >> ~/.ssh/known_hosts
   chmod 600 ~/.ssh/known_hosts
 else
   echo -e "${RED}[X] GitHub SSH key fingerprint mismatch!${NC}"
@@ -268,7 +275,7 @@ fi
 if [[ "$1" == "--auto" ]]; then
   user_input=""
 else
-  echo -e "${ORANGE}Press 'c' to cancel, 'd' to delay, or any other key to proceed with the reboot.${NC}"
+  echo -e "${ORANGE}[*] Press 'c' to cancel, 'd' to delay, or any other key to proceed with the reboot.${NC}"
   read -n 1 -t 60 user_input
 fi
 if [[ "$user_input" == "c" ]]; then
@@ -278,7 +285,7 @@ elif [[ "$user_input" == "d" ]]; then
   exit 0
 else
   echo -e "${YELLOW}[!] Rebooting in 60 seconds to finalize setup.${NC}"
-  echo -e "${ORANGE}Cancel with CTRL+C ; or run ${NC}${RED}'sudo reboot' ${NC}${YELLOW}if needed sooner (${NC}${RED}o${NC}^${YELLOW}_${NC}^${RED}o${NC}${YELLOW})${NC}"
+  echo -e "${ORANGE}[*] Cancel with CTRL+C ; or run ${NC}${RED}'sudo reboot' ${NC}${YELLOW}if needed sooner (${NC}${RED}o${NC}^${YELLOW}_${NC}^${RED}o${NC}${YELLOW})${NC}"
 fi
 sleep 60
 echo -e "${L_GREEN}[✓] Rebooting Now !${NC}" && sudo reboot
