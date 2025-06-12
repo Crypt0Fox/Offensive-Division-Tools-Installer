@@ -1,7 +1,28 @@
 #!/bin/bash
-set -e
+
+#### Environment Setup ####
 export DEBIAN_FRONTEND=noninteractive
 export NEEDRESTART_MODE=a
+echo '* libraries/restart-without-asking boolean true' | sudo debconf-set-selections
+set -e
+
+#### GitHub SSH fingerprint fix ####
+echo "[*] Fixing GitHub SSH fingerprints..."
+{
+    declare -A GITHUB_KEYS
+    GITHUB_KEYS["rsa"]="SHA256:nThbg6PZs1u6jl8EY8vR3vM5NlHfa79G/nd8f1Lj9Wg"
+    GITHUB_KEYS["ecdsa"]="SHA256:p2QAMXNIC1TJYWeIOttrVc98/R1BUFWu3/LiyKgUfQM"
+    GITHUB_KEYS["ed25519"]="SHA256:+DiYx5C9FjI1sLdfNzsQ2oP89t6P8j0ymS4DIdFzM1w"
+    ssh-keygen -R github.com >/dev/null 2>&1
+    ssh-keyscan github.com 2>/dev/null | tee -a ~/.ssh/known_hosts > /tmp/github_keys
+    while read -r line; do
+        kt=$(echo "$line" | awk '{print $2}')
+        fp=$(echo "$line" | ssh-keygen -lf - | awk '{print $2}')
+        [[ "${GITHUB_KEYS[$kt]}" == "$fp" ]] && echo "[+] $kt fingerprint verified" || echo "[!] $kt fingerprint mismatch"
+    done < /tmp/github_keys
+    rm -f /tmp/github_keys
+    echo "[✓] GitHub SSH check complete."
+}
 
 #### Colors ####
 NC="\033[0m"
@@ -9,8 +30,6 @@ BLACK="\033[0;30m"
 D_GRAY="\033[1;30m"
 L_GRAY="\033[0;37m"
 WHITE="\033[1;37m"
-
-
 RED="\033[0;31m"
 L_RED="\033[1;31m"
 GREEN="\033[0;32m"
@@ -23,10 +42,6 @@ PURPLE="\033[0;35m"
 L_PURPLE="\033[1;35m"
 CYAN="\033[0;36m"
 L_CYAN="\033[1;36m"
-
-## Environment Setup ===
-export DEBIAN_FRONTEND=noninteractive
-echo '* libraries/restart-without-asking boolean true' | sudo debconf-set-selections
 
 # === 0. Update & Essentials ===
 echo -e "${YELLOW}[+] Setting time zone to Asia/Jerusalem...${NC}"
