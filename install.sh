@@ -33,6 +33,10 @@ sudo timedatectl set-ntp true
 echo -e "${GREEN}[+] Updating and installing essentials...${NC}"
 sudo apt update
 
+## Automatically accept service restarts (needrestart) ===
+sudo apt install -y needrestart
+echo "\$nrconf{restart} = 'a';" | sudo tee /etc/needrestart/conf.d/99-auto.conf
+
 ## Make it timeout or skip safely + Allow bypassing boolean prompts ===
 if [[ "$1" == "-y" ]]; then
   confirm="y"
@@ -92,7 +96,7 @@ if [ ! -f "$HOME/.ssh/id_ed25519" ]; then
   cat "$HOME/.ssh/id_ed25519.pub"
   echo "======================================"
   echo -e "${ORANGE}Visit: https://github.com/settings/keys${NC}"
-  read -p "[+] Press Enter after adding the key to continue..."
+  read -p "${RED}[+] Press Enter ${NC}${RED}ONLY after adding the key ${NC}${YELLOW}to continue...${NC}"
 else
   echo -e "${L_GREEN}[+] SSH key already exists, skipping.${NC}"
 fi
@@ -105,7 +109,7 @@ if [ -d /opt/recon/AutoRecon ]; then
   cd /opt/recon/AutoRecon
   python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt && deactivate
 else
-  echo "[!] AutoRecon clone failed or missing."
+  echo "${RED}[!] AutoRecon clone failed or missing.${NC}"
 fi
 if [ ! -d /opt/active-directory/BloodHoundCE ]; then
   mkdir -p /opt/active-directory/BloodHoundCE
@@ -140,26 +144,44 @@ install_python_tool() {
   DEST=$3
   TARGET="/opt/$DEST/$FOLDER"
   if [ -d "$TARGET/.git" ]; then
-    echo "[+] $FOLDER already exists, skipping clone."
+    echo "${L_GREEN}[+] $FOLDER already exists, skipping clone.${NC}"
   else
-    echo "[+] Cloning $FOLDER into $TARGET..."
+    echo "${YELLOW}[+] Cloning $FOLDER into $TARGET...${NC}"
     rm -rf "$TARGET"
     git clone "$REPO" "$TARGET"
   fi
   cd "$TARGET" || { echo "❌ Failed to enter $TARGET"; return 1; }
-  echo "[+] Setting up venv for $FOLDER..."
+  echo "${GREEN}[+] Setting up venv for $FOLDER...${NC}"
   python3 -m venv venv && source venv/bin/activate
   if [ -f requirements.txt ]; then
-    echo "[+] Installing requirements for $FOLDER..."
+    echo "${GREEN}[+] Installing requirements for $FOLDER...${NC}"
     pip install -r requirements.txt
   else
-    echo "[!] No requirements.txt found for $FOLDER."
+    echo "${L_GREEN}[!] No requirements.txt found for $FOLDER.${NC}"
   fi
   deactivate
 }
 install_python_tool https://github.com/ly4k/Certipy.git Certipy-5.0.2 active-directory
+
+## GitHub Host Key Verification & Automation ===
+GITHUB_KEY_KNOWN=$(ssh-keyscan github.com 2>/dev/null | grep '^github.com ' | sha256sum | awk '{print $1}')
+GITHUB_KEY_EXPECTED="e11d52c9bbdbf40c1c2e6b12f9a1b1b3c15c9c72ae8e1df9897656b4246b8c68"  # GitHub ED25519 as of 2024
+
+if [[ "$GITHUB_KEY_KNOWN" == "$GITHUB_KEY_EXPECTED" ]]; then
+  echo -e "${L_GREEN}[+] GitHub host key verified. Adding to known_hosts...${NC}"
+  mkdir -p ~/.ssh
+  ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
+  chmod 600 ~/.ssh/known_hosts
+else
+  echo -e "${RED}[!] GitHub SSH key fingerprint mismatch!${NC}"
+  echo -e "${YELLOW}    Expected: $GITHUB_KEY_EXPECTED${NC}"
+  echo -e "${YELLOW}    Got:      $GITHUB_KEY_KNOWN${NC}"
+  echo -e "${RED}    Aborting to prevent MITM risk.${NC}"
+  exit 1
+fi
+
 ssh -T git@github.com 2>&1 | grep -q 'successfully authenticated' || {
-  echo "${RED}[!] SSH key not registered on GitHub. Please add it first."
+  echo "${RED}[!] SSH key not registered on GitHub. Please add it first.${NC}"
   echo "${YELLOW}Visit: https://github.com/settings/keys${NC}"
   exit 1
 }
@@ -175,7 +197,7 @@ if docker ps --filter "ancestor=bloodhoundad/bloodhound-ce" --filter "status=run
   cd /opt/active-directory/BloodHoundCE/docker
   docker compose -f docker-compose.linux.yml up -d
 else
-  echo "[!] BloodHoundCE/docker not found. Clone may have failed."
+  echo "${RED}[!] BloodHoundCE/docker not found. Clone may have failed.${NC}"
 fi
  >> "$LOG" 2>&1; fi
 echo "" >> "$LOG"
@@ -218,8 +240,12 @@ else
 fi
 
 # === 11. Final Checks + Reboot Block ===
-echo -e "${YELLOW}Press 'c' to cancel, 'd' to delay, or any other key to proceed with the reboot.${NC}"
-read -n 1 -t 60 user_input
+if [[ "$1" == "--auto" ]]; then
+  user_input=""
+else
+  echo -e "${YELLOW}Press 'c' to cancel, 'd' to delay, or any other key to proceed with the reboot.${NC}"
+  read -n 1 -t 60 user_input
+fi
 if [[ "$user_input" == "c" ]]; then
   echo -e "${GREEN}[+] Reboot canceled.${NC}"
   exit 0
@@ -227,7 +253,7 @@ elif [[ "$user_input" == "d" ]]; then
   exit 0
 else
   echo -e "${L_GREEN}[!] Rebooting in 60 seconds to finalize setup.${NC}"
-  echo -e "${YELLOW}Cancel with CTRL+C or run 'init 6' if needed sooner.${NC}"
+  echo -e "${YELLOW}Cancel with CTRL+C ; or run ${NC}${RED}'sudo reboot' ${NC}${YELLOW}if needed sooner (${NC}${RED}o${NC}^${YELLOW}_${NC}^${RED}o${NC}${YELLOW})${NC}"
 fi
 sleep 60
-echo -e "${RED}[!] Rebooting Now !.${NC}" && sudo reboot
+echo -e "${RED}[!] Rebooting Now !${NC}" && sudo reboot
