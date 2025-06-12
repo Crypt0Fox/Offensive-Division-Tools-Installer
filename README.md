@@ -14,7 +14,7 @@ A plug & play battle-ready arsenal for **Kali Linux** — built for Red Teamers,
 
 ## 🧰 Install
 
-sudo  git clone [https://github.com/Crypt0Fox/Offensive-Division-Tools-Installer.git](https://github.com/Crypt0Fox/Offensive-Division-Tools-Installer.git) && cd Offensive-Division-Tools-Installer && chmod +x install.sh && sudo ./install.sh
+sudo  git clone [https://github.com/Crypt0Fox/Offensive-Division-Tools-Installer.git](https://github.com/Crypt0Fox/Offensive-Division-Tools-Installer.git) && cd Offensive-Division-Tools-Installer && sudo chown kali * && sudo chmod +x install.sh && sudo ./install.sh -y
 
 ## 📎 Tools Deployed
 
