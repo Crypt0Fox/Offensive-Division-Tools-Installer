@@ -1,5 +1,7 @@
 #!/bin/bash
 set -e
+export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
 
 #### Colors ####
 NC="\033[0m"
@@ -41,7 +43,7 @@ echo "\$nrconf{restart} = 'a';" | sudo tee /etc/needrestart/conf.d/99-auto.conf
 if [[ "$1" == "-y" ]]; then
   confirm="y"
 else
-read -t 10 -p "${RED}[!] Proceed with full-upgrade? (y/N, default=N in 10s): ${NC}" confirm || confirm="n"
+read -t 10 -p "[!] Proceed with full-upgrade? (y/N, default=N in 10s):" confirm || confirm="n"
 confirm=${confirm:-n}
 fi
 if [[ "$confirm" =~ ^[Yy]$ ]]; then
@@ -96,7 +98,8 @@ if [ ! -f "$HOME/.ssh/id_ed25519" ]; then
   cat "$HOME/.ssh/id_ed25519.pub"
   echo "======================================"
   echo -e "${ORANGE}Visit: https://github.com/settings/keys${NC}"
-  read -p "${RED}[+] Press Enter ${NC}${RED}ONLY after adding the key ${NC}${YELLOW}to continue...${NC}"
+  #### read -p "${RED}[+] Press Enter ${NC}${RED}ONLY after adding the key ${NC}${YELLOW}to continue...${NC}"   <--- [need to fix]
+  read -p "[+] Press Enter ONLY after adding the key to continue..."
 else
   echo -e "${L_GREEN}[+] SSH key already exists, skipping.${NC}"
 fi
@@ -109,7 +112,7 @@ if [ -d /opt/recon/AutoRecon ]; then
   cd /opt/recon/AutoRecon
   python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt && deactivate
 else
-  echo "${RED}[!] AutoRecon clone failed or missing.${NC}"
+  echo -e "${RED}[!] AutoRecon clone failed or missing.${NC}"
 fi
 if [ ! -d /opt/active-directory/BloodHoundCE ]; then
   mkdir -p /opt/active-directory/BloodHoundCE
@@ -144,20 +147,20 @@ install_python_tool() {
   DEST=$3
   TARGET="/opt/$DEST/$FOLDER"
   if [ -d "$TARGET/.git" ]; then
-    echo "${L_GREEN}[+] $FOLDER already exists, skipping clone.${NC}"
+    echo -e "${L_GREEN}[+] $FOLDER already exists, skipping clone.${NC}"
   else
-    echo "${YELLOW}[+] Cloning $FOLDER into $TARGET...${NC}"
+    echo -e "${YELLOW}[+] Cloning $FOLDER into $TARGET...${NC}"
     rm -rf "$TARGET"
     git clone "$REPO" "$TARGET"
   fi
   cd "$TARGET" || { echo "❌ Failed to enter $TARGET"; return 1; }
-  echo "${GREEN}[+] Setting up venv for $FOLDER...${NC}"
+  echo -e "${GREEN}[+] Setting up venv for $FOLDER...${NC}"
   python3 -m venv venv && source venv/bin/activate
   if [ -f requirements.txt ]; then
-    echo "${GREEN}[+] Installing requirements for $FOLDER...${NC}"
+    echo -e "${GREEN}[+] Installing requirements for $FOLDER...${NC}"
     pip install -r requirements.txt
   else
-    echo "${L_GREEN}[!] No requirements.txt found for $FOLDER.${NC}"
+    echo -e "${L_GREEN}[!] No requirements.txt found for $FOLDER.${NC}"
   fi
   deactivate
 }
@@ -181,8 +184,8 @@ else
 fi
 
 ssh -T git@github.com 2>&1 | grep -q 'successfully authenticated' || {
-  echo "${RED}[!] SSH key not registered on GitHub. Please add it first.${NC}"
-  echo "${YELLOW}Visit: https://github.com/settings/keys${NC}"
+  echo -e "${RED}[!] SSH key not registered on GitHub. Please add it first.${NC}"
+  echo -e "${YELLOW}Visit: https://github.com/settings/keys${NC}"
   exit 1
 }
 install_python_tool https://github.com/TheCyb3rAlpha/BobTheSmuggler.git BobTheSmuggler recon
@@ -197,7 +200,7 @@ if docker ps --filter "ancestor=bloodhoundad/bloodhound-ce" --filter "status=run
   cd /opt/active-directory/BloodHoundCE/docker
   docker compose -f docker-compose.linux.yml up -d
 else
-  echo "${RED}[!] BloodHoundCE/docker not found. Clone may have failed.${NC}"
+  echo -e "${RED}[!] BloodHoundCE/docker not found. Clone may have failed.${NC}"
 fi
  >> "$LOG" 2>&1; fi
 echo "" >> "$LOG"
