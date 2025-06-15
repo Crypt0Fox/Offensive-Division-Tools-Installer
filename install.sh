@@ -30,13 +30,13 @@ set -e
 #### GitHub SSH fingerprint fix ####
 echo -e "${YELLOW}[!] Fixing GitHub SSH fingerprints...${NC}"
 
-# Fetch and verify GitHub SSH fingerprints
+## Fetch and verify GitHub SSH fingerprints ##
 declare -A GITHUB_KEYS
 GITHUB_KEYS["rsa"]="SHA256:nThbg6z1Yx3Y1s6J1j8EY8V3R3VM5NlH4r9QCnd6F1lg"
 GITHUB_KEYS["ecdsa"]="SHA256:p2QAMXNIC1TJYWeIOttrVc98/R1BUFWu3/LiyKgUfQM"
 GITHUB_KEYS["ed25519"]="SHA256:Hi1sPfbx91Q6sXQpF1s1dFfNZSQ2oP8gtG8j09m4sDYI"
 
-# Timeout and validate
+## Timeout and validate ##
 if ! timeout 5s ssh-keyscan github.com 2>/dev/null | tee /tmp/github_keys | tee -a ~/.ssh/known_hosts > /dev/null; then
   echo -e "${RED}[X] Failed to fetch GitHub SSH keys. Exiting.${NC}"
   exit 1
@@ -57,6 +57,7 @@ done < /tmp/github_keys
 
 rm -f /tmp/github_keys
 echo -e "${L_GREEN}[✓] GitHub SSH check complete.${NC}"
+
 
 # === 0. Update & Essentials ===
 echo -e "${GREEN}[+] Setting time zone to Asia/Jerusalem...${NC}"
@@ -87,10 +88,12 @@ sudo apt install -y \
   jq net-tools docker.io docker-compose cmatrix lolcat figlet  zsh fzf bat ripgrep \
   fortune gedit libreadline-dev libusb-0.1-4 pkg-config libpcsclite-dev pcscd starship
 
+
 # === 1. Shell & Aesthetics ===
 #echo 'eval "$(starship init zsh)"' >> ~/.zshrc
 #echo 'figlet "STAY SHARP" | lolcat' >> ~/.zshrc
 #echo 'fortune | lolcat' >> ~/.zshrc
+
 
 # === 2. Docker Setup ===
 echo -e "${GREEN}[+] Configuring Docker...${NC}"
@@ -99,6 +102,7 @@ sudo usermod -aG docker "$USER"
 
 ## Installing pipx without the --break-system-packages flag to avoid conflicts with system-managed Python packages ===
 python3 -m pip install --user pipx --break-system-packages
+
 
 # === 3. pipx & Rust Setup ===
 echo -e "${GREEN}[+] Installing CLI tools via pipx...${NC}"
@@ -113,6 +117,7 @@ pipx install bloodhound-ce
 pipx install git+https://github.com/Pennyw0rth/NetExec
 pipx install git+https://github.com/login-securite/DonPAPI.git
 pipx install git+https://github.com/garrettfoster13/sccmhunter
+
 
 # === 4. Create /opt Layout ===
 echo -e "${GREEN}[+] Creating tool directories...${NC}"
@@ -134,6 +139,7 @@ else
 fi
 sudo mkdir -p /opt/{active-directory,binaries,credential-access,lateral-movement,post-exploitation,recon,webshells}
 sudo chown -R "$USER:$USER" /opt/*
+
 
 # === 5. Clone & Set Up Tools ===
 [ -d /opt/recon/AutoRecon/.git ] || git clone https://github.com/Tib3rius/AutoRecon.git /opt/recon/AutoRecon
@@ -160,14 +166,17 @@ sudo apt install -y \
   libbluetooth-dev \
   libpython3-dev
 
+
 # === 6. Proxmark3 (RFID Recon) ===
 cd /opt/recon
 [ -d /opt/recon/proxmark3/.git ] || git clone https://github.com/RfidResearchGroup/proxmark3.git /opt/recon/proxmark3
+
 
 # === 7. create global link ===
 mkdir -p "$HOME/bin"
 [ -L "$HOME/bin/proxmark3" ] || ln -s /opt/recon/proxmark3/client/proxmark3 "$HOME/bin/proxmark3"
 echo 'export PATH="$HOME/bin:$PATH"' >> "$HOME/.zshrc"
+
 
 # === 8. Python Venv Tools ===
 install_python_tool() {
@@ -212,6 +221,7 @@ ssh -T git@github.com 2>&1 | grep -q 'successfully authenticated' || {
 }
 install_python_tool https://github.com/TheCyb3rAlpha/BobTheSmuggler.git BobTheSmuggler recon
 
+
 # === 9. Unit6 Healthcheck ===
 cat << 'EOF' | sudo tee /opt/unit6_healthcheck.sh > /dev/null
 #!/bin/bash
@@ -252,6 +262,7 @@ sudo systemctl daemon-reexec
 sudo systemctl daemon-reload
 sudo systemctl enable --now unit6-healthcheck.timer
 
+
 # === 10. Final Cleanup ===
 sudo apt update
 sudo apt upgrade -y
@@ -264,7 +275,23 @@ else
   echo "No packages in 'rc' state to purge."
 fi
 
-# === 11. Final Checks + Reboot Block ===
+
+# === 11. A lil'bit of Off3nsiv3 B3utifi3r Gay Sauc3 ===
+echo -e "${GREEN}[+] Setting custom wallpaper and lock screen...${NC}"
+WALL_SRC="$HOME/Offensive-Division-Tools-Installer/R&D Materials/OffensiveWallpaper.png"
+WALL_DST="/usr/share/backgrounds/offensive_wallpaper.png"
+sudo cp "$WALL_SRC" "$WALL_DST"
+
+## XFCE Desktop wallpaper ===
+xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/image-path -s "$WALL_DST" || true
+
+## LightDM lock/login screen (GTK Greeter) ===
+LIGHTDM_CONF="/etc/lightdm/lightdm-gtk-greeter.conf"
+sudo sed -i '/^background=/d' "$LIGHTDM_CONF"
+echo "background=$WALL_DST" | sudo tee -a "$LIGHTDM_CONF"
+
+
+# === 12. Final Checks + Reboot Block ===
 if [[ "$1" == "--auto" ]]; then
   user_input=""
 else
