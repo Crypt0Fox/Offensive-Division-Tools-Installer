@@ -280,15 +280,19 @@ fi
 echo -e "${GREEN}[+] Setting custom wallpaper and lock screen...${NC}"
 WALL_SRC="$HOME/Offensive-Division-Tools-Installer/R&D Materials/OffensiveWallpaper.png"
 WALL_DST="/usr/share/backgrounds/offensive_wallpaper.png"
-sudo cp "$WALL_SRC" "$WALL_DST"
+if [ -f "$WALL_SRC" ]; then
+  sudo cp "$WALL_SRC" "$WALL_DST"
 
-## XFCE Desktop wallpaper ===
-xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/image-path -s "$WALL_DST" || true
+  ## XFCE Desktop wallpaper ===
+  xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/image-path -s "$WALL_DST" || true
 
-## LightDM lock/login screen (GTK Greeter) ===
-LIGHTDM_CONF="/etc/lightdm/lightdm-gtk-greeter.conf"
-sudo sed -i '/^background=/d' "$LIGHTDM_CONF"
-echo "background=$WALL_DST" | sudo tee -a "$LIGHTDM_CONF"
+  ## LightDM lock/login screen (GTK Greeter) ===
+  LIGHTDM_CONF="/etc/lightdm/lightdm-gtk-greeter.conf"
+  sudo sed -i '/^background=/d' "$LIGHTDM_CONF"
+  echo "background=$WALL_DST" | sudo tee -a "$LIGHTDM_CONF"
+else
+  echo -e "${RED}[X] Wallpaper not found: $WALL_SRC${NC}"
+fi
 
 
 # === 12. Final Checks + Reboot Block ===
