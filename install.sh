@@ -157,6 +157,19 @@ wget https://github.com/SpecterOps/bloodhound-cli/releases/latest/download/blood
 tar -xvzf bloodhound-cli-linux-amd64.tar.gz && \
 ./bloodhound-cli install | tee bloodhound_install.log
 
+## Extract BloodHound admin password to Desktop ===
+echo -e "${GREEN}[+] Extracting BloodHound admin password...${NC}"
+BHPASS=$(docker exec bloodhoundce-bloodhound-1 bloodhound-cli config get default_password 2>/dev/null)
+
+if [[ -n "$BHPASS" ]]; then
+  echo "Admin password: $BHPASS"
+  echo "$BHPASS" > "/home/kali/Desktop/BloodHound-Password.txt"
+  sudo chown kali:kali "/home/kali/Desktop/BloodHound-Password.txt"
+  echo -e "${L_GREEN}[✓] Password saved to Desktop.${NC}"
+else
+  echo -e "${RED}[X] Failed to extract BloodHound password.${NC}"
+fi
+
 ## Add Proxmark3 build requirements ===
 sudo apt install -y \
   gcc-arm-none-eabi \
@@ -278,7 +291,8 @@ fi
 
 # === 11. A lil'bit of Off3nsiv3 B3utifi3r Gay Sauc3 ===
 echo -e "${GREEN}[+] Setting custom wallpaper and lock screen...${NC}"
-WALL_SRC="$HOME/Offensive-Division-Tools-Installer/R&D Materials/OffensiveWallpaper.png"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WALL_SRC="$SCRIPT_DIR/R&D Materials/OffensiveWallpaper.png"
 WALL_DST="/usr/share/backgrounds/offensive_wallpaper.png"
 if [ -f "$WALL_SRC" ]; then
   sudo cp "$WALL_SRC" "$WALL_DST"
