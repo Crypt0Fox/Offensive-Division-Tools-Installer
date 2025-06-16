@@ -20,12 +20,23 @@ CYAN="\033[0;36m"
 L_CYAN="\033[1;36m"
 
 #### Environment Setup ####
-export DEBIAN_FRONTEND=noninteractive
-export NEEDRESTART_MODE=a
-echo -e "${ORANGE}[*] Suppressing service restart prompts (libc6, needrestart)...${NC}"
-echo "libc6 libraries/restart-without-asking boolean true" | sudo debconf-set-selections
-echo "needrestart needrestart/restart string a" | sudo debconf-set-selections
-set -e
+# ----------------------- KEEP KALI AWAKE -----------------------#
+export DISPLAY=:0 #                                              #
+export XAUTHORITY=/home/kali/.Xauthority #                       #
+#                                                                #
+## Kill screen lockers (optional)                                #
+pkill gnome-screensaver 2>/dev/null #                            #
+pkill xscreensaver 2>/dev/null #                                 #
+#                                                                #
+## Disable blanking and power-saving                             #
+xset s off           # disable screen saver                      #
+xset -dpms           # disable DPMS (Energy Star)                #
+xset s noblank       # never blank the screen                    #
+#                                                                #
+## Gnome session idle timeout                                    #
+gsettings set org.gnome.desktop.session idle-delay 0             #
+gsettings set org.gnome.desktop.screensaver lock-enabled false # #
+# ---------------------------------------------------------------#
 
 #### GitHub SSH fingerprint fix ####
 echo -e "${YELLOW}[!] Fixing GitHub SSH fingerprints...${NC}"
@@ -156,6 +167,8 @@ cd /opt/active-directory/BloodHoundCE && \
 wget https://github.com/SpecterOps/bloodhound-cli/releases/latest/download/bloodhound-cli-linux-amd64.tar.gz && \
 tar -xvzf bloodhound-cli-linux-amd64.tar.gz && \
 ./bloodhound-cli install | tee bloodhound_install.log
+grep -i -A2 -B2 "password" bloodhound_install.log > "$HOME/Desktop/BloodHound-Password.txt"
+sudo chown "$USER:$USER" "$HOME/Desktop/BloodHound-Password.txt"
 
 ## Extract BloodHound admin password to Desktop ===
 echo -e "${GREEN}[+] Extracting BloodHound admin password...${NC}"
@@ -293,7 +306,7 @@ fi
 # === 11. A lil'bit of Off3nsiv3 B3utifi3r Gay Sauc3 ===
 echo -e "${GREEN}[+] Setting custom wallpaper and lock screen...${NC}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WALL_SRC="$SCRIPT_DIR/R&D Materials/OffensiveWallpaper.png"
+WALL_SRC="/home/kali/Documents/Offensive-Division-Tools-Installer/R&D Materials/OffensiveWallpaper.png"
 WALL_DST="/usr/share/backgrounds/offensive_wallpaper.png"
 if [ -f "$WALL_SRC" ]; then
   sudo cp "$WALL_SRC" "$WALL_DST"
