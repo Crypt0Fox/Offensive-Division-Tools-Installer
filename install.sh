@@ -159,15 +159,16 @@ tar -xvzf bloodhound-cli-linux-amd64.tar.gz && \
 
 ## Extract BloodHound admin password to Desktop ===
 echo -e "${GREEN}[+] Extracting BloodHound admin password...${NC}"
-BHPASS=$(docker exec bloodhoundce-bloodhound-1 bloodhound-cli config get default_password 2>/dev/null)
-
+BHPASS=$(docker exec bloodhoundce-bloodhound-1 bloodhound-cli config get default_password 2>/dev/null || echo "")
 if [[ -n "$BHPASS" ]]; then
   echo "Admin password: $BHPASS"
-  echo "$BHPASS" > "/home/kali/Desktop/BloodHound-Password.txt"
-  sudo chown kali:kali "/home/kali/Desktop/BloodHound-Password.txt"
-  echo -e "${L_GREEN}[✓] Password saved to Desktop.${NC}"
+  DESKTOP_PATH="$HOME/Desktop"
+  [ -d "$DESKTOP_PATH" ] || DESKTOP_PATH="/tmp"
+  echo "$BHPASS" > "$DESKTOP_PATH/BloodHound-Password.txt"
+  sudo chown "$USER:$USER" "$DESKTOP_PATH/BloodHound-Password.txt"
+  echo -e "${L_GREEN}[✓] Password saved to $DESKTOP_PATH/BloodHound-Password.txt.${NC}"
 else
-  echo -e "${RED}[X] Failed to extract BloodHound password.${NC}"
+  echo -e "${RED}[X] Failed to extract BloodHound password. Skipping save.${NC}"
 fi
 
 ## Add Proxmark3 build requirements ===
