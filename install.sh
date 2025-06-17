@@ -143,8 +143,9 @@ if [ ! -f "$HOME/.ssh/id_ed25519" ]; then
   echo "======================================"
   cat "$HOME/.ssh/id_ed25519.pub"
   echo "======================================"
-  echo -e "${BLUE}Visit: https://github.com/settings/keys${NC}"
-  read -p "[+] Press Enter ONLY after adding the key to continue..."
+  echo -e "${L_BLUE}Visit: https://github.com/settings/keys${NC}"
+  echo -e "${CYAN}[+] Press Enter ONLY after adding the key to continue...${NC}"
+  read -p "Waiting for you champ! When you are ready - Please Press Enter 🦊"
 else
   echo -e "${L_GREEN}[✓] SSH key already exists, skipping.${NC}"
 fi
@@ -166,23 +167,11 @@ fi
 cd /opt/active-directory/BloodHoundCE && \
 wget https://github.com/SpecterOps/bloodhound-cli/releases/latest/download/bloodhound-cli-linux-amd64.tar.gz && \
 tar -xvzf bloodhound-cli-linux-amd64.tar.gz && \
+chmod +x bloodhound-cli && sudo mv bloodhound-cli /usr/local/bin/
 ./bloodhound-cli install | tee bloodhound_install.log
-grep -i -A2 -B2 "password" bloodhound_install.log > "$HOME/Desktop/BloodHound-Password.txt"
-sudo chown "$USER:$USER" "$HOME/Desktop/BloodHound-Password.txt"
-
-## Extract BloodHound admin password to Desktop ===
-echo -e "${GREEN}[+] Extracting BloodHound admin password...${NC}"
-BHPASS=$(docker exec bloodhoundce-bloodhound-1 bloodhound-cli config get default_password 2>/dev/null || echo "")
-if [[ -n "$BHPASS" ]]; then
-  echo "Admin password: $BHPASS"
-  DESKTOP_PATH="$HOME/Desktop"
-  [ -d "$DESKTOP_PATH" ] || DESKTOP_PATH="/tmp"
-  echo "$BHPASS" > "$DESKTOP_PATH/BloodHound-Password.txt"
-  sudo chown "$USER:$USER" "$DESKTOP_PATH/BloodHound-Password.txt"
-  echo -e "${L_GREEN}[✓] Password saved to $DESKTOP_PATH/BloodHound-Password.txt.${NC}"
-else
-  echo -e "${RED}[X] Failed to extract BloodHound password. Skipping save.${NC}"
-fi
+command -v bloodhound-cli || echo -e "${RED}[X] bloodhound-cli still not in PATH.${NC}"
+grep -i -A2 -B2 "password" bloodhound_install.log > "/Home/Kali/Desktop/BloodHound-Password.txt"
+sudo chown "$USER:$USER" "/Home/Kali/Desktop/BloodHound-Password.txt"
 
 ## Add Proxmark3 build requirements ===
 sudo apt install -y \
@@ -243,7 +232,7 @@ fi
 
 ssh -T git@github.com 2>&1 | grep -q 'successfully authenticated' || {
   echo -e "${RED}[X] SSH key not registered on GitHub. Please add it first.${NC}"
-  echo -e "${BLUE}Visit: https://github.com/settings/keys${NC}"
+  echo -e "${L_BLUE}Visit: https://github.com/settings/keys${NC}"
   exit 1
 }
 install_python_tool https://github.com/TheCyb3rAlpha/BobTheSmuggler.git BobTheSmuggler recon
@@ -299,7 +288,7 @@ sudo apt autoclean -y
 if dpkg -l | awk '/^rc/ {print $2}' | grep -q .; then
   sudo apt purge -y $(dpkg -l | awk '/^rc/ {print $2}') || true
 else
-  echo "No packages in 'rc' state to purge."
+  echo -e "${YELLOW}[!] No packages in 'rc' state to purge.${NC}"
 fi
 
 
@@ -319,7 +308,7 @@ if [ -f "$WALL_SRC" ]; then
   sudo sed -i '/^background=/d' "$LIGHTDM_CONF"
   echo "background=$WALL_DST" | sudo tee -a "$LIGHTDM_CONF"
 else
-  echo -e "${RED}[X] Wallpaper not found: $WALL_SRC${NC}"
+  echo -e "${RED}[X] Wallpaper not found: $WALL_SRC.${NC}"
 fi
 
 
@@ -327,17 +316,9 @@ fi
 if [[ "$1" == "--auto" ]]; then
   user_input=""
 else
-  echo -e "${ORANGE}[*] Press 'c' to cancel, 'd' to delay, or any other key to proceed with the reboot.${NC}"
-  read -n 1 -t 60 user_input
-fi
-if [[ "$user_input" == "c" ]]; then
-  echo -e "${GREEN}[+] Reboot canceled.${NC}"
-  exit 0
-elif [[ "$user_input" == "d" ]]; then
-  exit 0
-else
-  echo -e "${YELLOW}[!] Rebooting in 60 seconds to finalize setup.${NC}"
-  echo -e "${ORANGE}[*] Cancel with CTRL+C ; or run ${NC}${RED}'sudo reboot' ${NC}${YELLOW}if needed sooner (${NC}${RED}o${NC}^${YELLOW}_${NC}^${RED}o${NC}${YELLOW})${NC}"
+  echo -e "${L_CYAN}✅ \"*~*Click*~* Nice!\" You've got to the finish line! 🦊${NC}"
+  echo -e "${L_YELLOW}[!] Rebooting in 60 seconds to finalize setup.${NC}"
+  echo -e "${ORANGE}[*] Cancel with CTRL+C (then run ${NC}${L_RED}'sudo reboot' ${NC}${ORANGE}manualy) - But, you've got to Reboot before using the system!)${NC} ${YELLOW}(${NC}${L_RED}o${NC}^${YELLOW}_${NC}^${L_RED}o${NC}${YELLOW})${NC}"
 fi
 sleep 60
 echo -e "${L_GREEN}[✓] Rebooting Now !${NC}" && sudo reboot
