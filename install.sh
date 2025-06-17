@@ -307,7 +307,7 @@ fi
 echo -e "${GREEN}[+] Setting custom wallpaper and lock screen...${NC}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WALL_SRC="/home/kali/Documents/Offensive-Division-Tools-Installer/R&D Materials/OffensiveWallpaper.png"
-WALL_DST="/usr/share/backgrounds/kali-16x9/offensive_wallpaper.png"
+WALL_DST="/usr/share/backgrounds/kali-16x9/OffensiveWallpaper.png"
 if [ -f "$WALL_SRC" ]; then
   sudo cp "$WALL_SRC" "$WALL_DST"
 
