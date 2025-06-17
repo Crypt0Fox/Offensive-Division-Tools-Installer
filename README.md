@@ -14,7 +14,7 @@ A plug & play battle-ready arsenal for **Kali Linux** — built for Red Teamers,
 
 ## 🧰 Install
 
-cd /Home/Kali/Documents/ && sudo apt update && echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections && sudo apt install -y git needrestart && echo '$nrconf{restart} = "a";' | sudo tee /etc/needrestart/conf.d/99-auto.conf && sudo git clone https://github.com/Crypt0Fox/Offensive-Division-Tools-Installer.git && cd Offensive-Division-Tools-Installer && sudo chown kali * && sudo chmod +x install.sh && sudo ./install.sh -y
+cd /home/kali/Documents/ && sudo apt update && echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections && sudo apt install -y git needrestart && echo '$nrconf{restart} = "a";' | sudo tee /etc/needrestart/conf.d/99-auto.conf && sudo git clone https://github.com/Crypt0Fox/Offensive-Division-Tools-Installer.git && cd Offensive-Division-Tools-Installer && sudo chown kali * && sudo chmod +x install.sh && sudo ./install.sh -y
 
 
 ## 📎 Tools Deployed
