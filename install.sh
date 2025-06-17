@@ -170,8 +170,8 @@ tar -xvzf bloodhound-cli-linux-amd64.tar.gz && \
 chmod +x bloodhound-cli && sudo mv bloodhound-cli /usr/local/bin/
 ./bloodhound-cli install | tee bloodhound_install.log
 command -v bloodhound-cli || echo -e "${RED}[X] bloodhound-cli still not in PATH.${NC}"
-grep -i -A2 -B2 "password" bloodhound_install.log > "/Home/Kali/Desktop/BloodHound-Password.txt"
-sudo chown "$USER:$USER" "/Home/Kali/Desktop/BloodHound-Password.txt"
+grep -i -A2 -B2 "password" bloodhound_install.log > "/home/kali/Desktop/BloodHound-Password.txt"
+sudo chown "$USER:$USER" "/home/kali/Desktop/BloodHound-Password.txt"
 
 ## Add Proxmark3 build requirements ===
 sudo apt install -y \
