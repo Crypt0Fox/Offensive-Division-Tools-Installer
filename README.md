@@ -3,6 +3,8 @@
 A plug & play battle-ready arsenal for **Kali Linux** — built for Red Teamers, Ethical Hackers, and Cyber Operators.
 get your hands on the Offensive-Division Battle Station!
 
+# 🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸
+
 ## ⚙️ What's Inside
 
 - 🚀 Fully automated install script (1 run → full setup)
@@ -51,7 +53,7 @@ cd /home/kali/Documents/ && sudo apt update && echo 'debconf debconf/frontend se
 
 [MIT](LICENSE)
 
-# 🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸
+# 🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸🔸
 # - Built by CryptoFox.
 ## Stay Sharp. Stay Frosty. Stay Offensive. 🦊
 
