@@ -299,6 +299,22 @@ WALL_SRC="/home/kali/Documents/Offensive-Division-Tools-Installer/R&D Materials/
 WALL_DST="/usr/share/backgrounds/kali-16x9/OffensiveWallpaper.png"
 if [ -f "$WALL_SRC" ]; then
   sudo cp "$WALL_SRC" "$WALL_DST"
+  
+  ## Ensure new users (or first login) inherit this wallpaper ===
+mkdir -p /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml
+XFCE_CONF="/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml"
+cat <<EOF | sudo tee "$XFCE_CONF" > /dev/null
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xfce4-desktop" version="1.0">
+  <property name="backdrop">
+    <property name="screen0">
+      <property name="monitor0">
+        <property name="image-path" type="string" value="$WALL_DST"/>
+      </property>
+    </property>
+  </property>
+</channel>
+EOF
 
   ## XFCE Desktop wallpaper ===
   xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/image-path -s "$WALL_DST" || true
