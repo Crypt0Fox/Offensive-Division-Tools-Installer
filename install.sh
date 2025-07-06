@@ -187,14 +187,16 @@ sudo apt install -y \
 cd /opt/recon
 [ -d /opt/recon/proxmark3/.git ] || git clone https://github.com/RfidResearchGroup/proxmark3.git /opt/recon/proxmark3
 
+# === 7. Psudohash ===
+[ -d /opt/credential-access/psudohash/.git ] || git clone https://github.com/t3l3machus/psudohash.git /opt/credential-access/psudohash
 
-# === 7. create global link ===
+# === 8. create global link ===
 mkdir -p "$HOME/bin"
 [ -L "$HOME/bin/proxmark3" ] || ln -s /opt/recon/proxmark3/client/proxmark3 "$HOME/bin/proxmark3"
 echo 'export PATH="$HOME/bin:$PATH"' >> "$HOME/.zshrc"
 
 
-# === 8. Python Venv Tools ===
+# === 9. Python Venv Tools ===
 install_python_tool() {
   REPO=$1
   FOLDER=$2
@@ -238,7 +240,7 @@ ssh -T git@github.com 2>&1 | grep -q 'successfully authenticated' || {
 install_python_tool https://github.com/TheCyb3rAlpha/BobTheSmuggler.git BobTheSmuggler recon
 
 
-# === 9. Unit6 Healthcheck ===
+# === 10. Unit6 Healthcheck ===
 cat << 'EOF' | sudo tee /opt/unit6_healthcheck.sh > /dev/null
 #!/bin/bash
 LOG="/var/log/unit6_healthcheck.log"
@@ -279,7 +281,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now unit6-healthcheck.timer
 
 
-# === 10. Final Cleanup ===
+# === 11. Final Cleanup ===
 sudo apt update
 sudo apt upgrade -y
 sudo apt -s autoremove
@@ -292,7 +294,7 @@ else
 fi
 
 
-# === 11. A lil'bit of Off3nsiv3 B3utifi3r Gay Sauc3 ===
+# === 12. A lil'bit of Off3nsiv3 B3utifi3r Gay Sauc3 ===
 echo -e "${GREEN}[+] Setting custom wallpaper and lock screen...${NC}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WALL_SRC="/home/kali/Documents/Offensive-Division-Tools-Installer/R&D Materials/OffensiveWallpaper.png"
@@ -328,7 +330,7 @@ else
 fi
 
 
-# === 12. Final Checks + Reboot Block ===
+# === 13. Final Checks + Reboot Block ===
 if [[ "$1" == "--auto" ]]; then
   user_input=""
 else
